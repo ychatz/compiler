@@ -8,11 +8,15 @@ endif
 CFLAGS=-g -Wall
 CC=gcc
 
-llama$(EXE): lexer.o
+llama$(EXE): lexer.o main.c
 	$(CC) $(CFLAGS) -o $@ $^ -lfl
 
 lexer.c: lexer.l
 	flex -s -o $@ $<
+
+test: lexer.o tests/main.c
+	$(CC) $(CFLAGS) -o $@ $^ -lfl
+	./a.out
 
 .PHONY: clean distclean
 
