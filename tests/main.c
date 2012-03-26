@@ -25,11 +25,18 @@ void test_lexer_should_understand_separated_keywords(void) {
     assert(yylex() == T_eof);
 }
 
+void test_lexer_should_not_care_about_inline_comments(void) {
+    yy_scan_string("22 --this is a comment\n\0"); 
+    assert(yylex() == T_iconst);
+    assert(yylex() == T_eof);
+}
+
 int main(void) {
     int count, i;
     void (*lexer_tests[])(void) = {test_lexer_should_understand_integers,
                                    test_lexer_should_understand_floats,
-                                   test_lexer_should_understand_separated_keywords};
+                                   test_lexer_should_understand_separated_keywords,
+                                   test_lexer_should_not_care_about_inline_comments};
 
     count = sizeof(lexer_tests)/MAGIC_NUMBER;
 
