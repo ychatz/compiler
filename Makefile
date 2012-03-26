@@ -14,9 +14,11 @@ llama$(EXE): lexer.o main.c
 lexer.c: lexer.l
 	flex -s -o $@ $<
 
-test: lexer.o tests/main.c
+llama-test$(EXE): lexer.o tests/main.c
 	$(CC) $(CFLAGS) -o $@ $^ -lfl
-	./a.out
+
+test$(EXE): llama-test
+	./llama-test$(EXE)
 
 .PHONY: clean distclean
 
