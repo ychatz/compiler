@@ -3,6 +3,13 @@
 #include "tokens.h"
 
 extern char *yytext;
+extern int lineno;
+
+int ERROR (const char msg []) {
+    fprintf(stderr, "ERROR, line %d: %s\n",
+    lineno, msg);
+    exit(1);
+}
 
 int main ()
 {

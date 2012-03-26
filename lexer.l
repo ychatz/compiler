@@ -1,10 +1,16 @@
 %{
 #include "tokens.h"
+int lineno=1;
+int ERROR (const char msg []);
 %}
 
+/* digits */
 D [0-9]
+/* hex codes */
 H [0-9a-fA-F]
+/* escape strings */
 ES  \\([ntr0\\\'\"]|x{H}{H})
+/* printable characters */
 PR [ !#-&\(-\[\]-~]
 
 %x COMMENT
@@ -69,14 +75,15 @@ PR [ !#-&\(-\[\]-~]
 ":="                                { return T_op_assign; }
 [=\|\+\-\*\/\!\;\<\>\(\)\[\]\,\:]   { return yytext[0]; }
 
-"--".+\n
+"--".+\n                            { lineno++; }
 "(*"                                { BEGIN(COMMENT); }
 <COMMENT>"*)"                       { BEGIN(INITIAL); }
-<COMMENT>\n                         { /*lineno++;*/ }
+<COMMENT>\n                         { lineno++; }
 <COMMENT>"*"                        { /* nothing */ }
 <COMMENT>[^*\n]+                    { /* nothing */ }
 
-[ \n\t\r]
+\n                                  { lineno++; }
+[ \t\r]
 <<EOF>>                             { return T_eof; }
-.                                   { return 1; }
+.                                   { return ERROR("Lexical Error\n"); }
 %%
