@@ -1,3 +1,4 @@
 *.o
 lexer.c
 llama
+llama-test
