@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../tokens.h"
-#define MAGIC_NUMBER 8 /* no idea how to calculate. hard-code for now */
 #define LEX_ERROR -1
 #define assert(e) do { \
     if (!(e)) { \
@@ -82,7 +81,7 @@ void lexer_should_count_lines(void) {
 }
 
 int main(void) {
-    int count, i;
+    int size, i;
     void (*lexer_tests[])(void) = {lexer_should_understand_integers,
                                    lexer_should_understand_floats,
                                    lexer_should_understand_separated_keywords,
@@ -90,14 +89,14 @@ int main(void) {
                                    lexer_should_not_care_about_inline_comments,
                                    lexer_should_count_lines};
 
-    count = sizeof(lexer_tests)/MAGIC_NUMBER;
+    size = sizeof(lexer_tests)/sizeof(lexer_tests[0]);
 
     printf("* Testing lexical analyzer...    0%%");
     fflush(stdout);
-    for (i=0; i<count; ++i) {
+    for (i=0; i<size; ++i) {
         lexer_tests[i]();
         system("sleep 0.2");
-        printf("\b\b\b\b%3d%%", 100*(i+1)/count);
+        printf("\b\b\b\b%3d%%", 100*(i+1)/size);
         fflush(stdout);
     }
     printf("\n");
