@@ -1,17 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../tokens.h"
+#include "helpers.h"
 #define LEX_ERROR -1
 #define assert(e) do { \
     if (!(e)) { \
-    fprintf(stderr, "\n\n------------------------------\n\n"); \
-    fprintf(stderr, "Test failed: %s\n" \
-                    "  Condition: %s\n" \
-                    "       File: %s\n" \
-                    "       Line: %d\n", \
-            __func__, #e,  __FILE__, __LINE__); \
-    fprintf(stderr, "\n------------------------------\n\n"); \
-    assert_failed(); \
+        assert_failed(__func__, #e, __FILE__, __LINE__); \
     } \
 } while(0);
 
@@ -21,8 +15,25 @@ int ERROR(const char msg[]) {
     return LEX_ERROR;
 }
 
-int assert_failed(void) {
+void assert_failed(const char *func, const char *cond, const char *file,
+                   const int line ) {
+    char *test_name;
+    size_t test_name_size = strlen(func);
+
+    test_name = (char *)(malloc(sizeof(char) * test_name_size));
+    memcpy(test_name, func, test_name_size * sizeof(char));
+    strreplace(test_name, '_', ' ');
+
+    fprintf(stderr, "\n\n------------------------------\n\n");
+    fprintf(stderr, "Test failed: %s\n"
+                    "  Condition: %s\n"
+                    "       File: %s\n"
+                    "       Line: %d\n",
+                    test_name, cond, file, line);
+    fprintf(stderr, "\n------------------------------\n\n");
     printf("* The tests failed! Aborting...\n");
+
+    free(test_name);
     abort();
 }
 

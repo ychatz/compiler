@@ -14,7 +14,7 @@ llama$(EXE): lexer.o main.c
 lexer.c: lexer.l
 	flex -s -o $@ $<
 
-llama-test$(EXE): lexer.o tests/main.c
+llama-test$(EXE): lexer.o tests/main.c tests/helpers.c
 	$(CC) $(CFLAGS) -o $@ $^ -lfl
 
 test$(EXE): llama-test
