@@ -93,15 +93,15 @@ void lexer_should_support_nested_comments(void) {
 
 void lexer_should_support_all_chars_inside_comments(void) {
     yy_scan_string("(* * ( ) ** asd  *hello* *) int"
-			       "(** multi--line\n"
-		           " ** multi--asterisk\n"
-				   " **) int\0");
+                   "(** multi--line\n"
+                   " ** multi--asterisk\n"
+                   " **) int\0");
     assert(yylex() == T_int);
     assert(yylex() == T_int);
     assert(yylex() == T_eof);
 
     yy_scan_string("--- three dashes int\n"
-			       "-- dash dash -- int\n\0");
+                   "-- dash dash -- int\n\0");
     assert(yylex() == T_eof);
 }
 
