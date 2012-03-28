@@ -4,6 +4,7 @@
 
 extern char *yytext;
 extern int lineno;
+extern FILE *yyin;
 
 int ERROR (const char msg []) {
     fprintf(stderr, "ERROR, line %d: %s\n",
@@ -11,8 +12,12 @@ int ERROR (const char msg []) {
     exit(1);
 }
 
-int main () {
+int main (int argc, char **argv) {
     int token;
+
+    if ( argc == 2 ) {
+        yyin = fopen(argv[1], "r");
+    }
 
     do {
         token = yylex();
