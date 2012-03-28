@@ -9,7 +9,7 @@ int ERROR (const char msg []);
 D [0-9]
 /* hex codes */
 H [0-9a-fA-F]
-/* escape strings */
+/* escape sequences */
 ES  \\([ntr0\\\'\"]|x{H}{H})
 /* printable characters */
 PR [ !#-&\(-\[\]-~]
@@ -52,6 +52,7 @@ PR [ !#-&\(-\[\]-~]
 "while"                             { return T_while; }
 "with"                              { return T_with; }
 
+{D}+[a-zA-Z]+                       { return ERROR("Invalid suffix on integer constant\n"); }
 {D}+                                { return T_iconst; }
 {D}+\.{D}+([eE][\+\-]?{D}+)?        { return T_fconst; }
 \'({PR}|{ES})\'                     { return T_cconst; }

@@ -110,6 +110,11 @@ void lexer_should_report_unterminated_comments(void) {
     assert(yylex() == LEX_ERROR);
 }
 
+void lexer_should_report_suffix_on_integer_constants(void) {
+    yy_scan_string("212sda\0");
+    assert(yylex() == LEX_ERROR);
+}
+
 int main(void) {
     int size, i;
     void (*lexer_tests[])(void) = {lexer_should_understand_integers,
@@ -120,7 +125,8 @@ int main(void) {
                                    lexer_should_support_inline_comments,
                                    lexer_should_support_nested_comments,
                                    lexer_should_support_all_chars_inside_comments,
-                                   lexer_should_report_unterminated_comments};
+                                   lexer_should_report_unterminated_comments,
+                                   lexer_should_report_suffix_on_integer_constants};
 
     size = sizeof(lexer_tests)/sizeof(lexer_tests[0]);
 
