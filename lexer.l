@@ -84,9 +84,10 @@ PR [ !#-&\(-\[\]-~]
 <COMMENT>"("
 <COMMENT>"*"
 <COMMENT>[^(*\n]+
+<COMMENT><<EOF>>                    { return ERROR("Unterminated comment\n"); }
 
 \n                                  { lineno++; }
 [ \t\r]
 <<EOF>>                             { return T_eof; }
-.                                   { return ERROR("Lexical Error\n"); }
+.                                   { return ERROR("Lexical error\n"); }
 %%

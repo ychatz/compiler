@@ -105,6 +105,11 @@ void lexer_should_support_all_chars_inside_comments(void) {
     assert(yylex() == T_eof);
 }
 
+void lexer_should_report_unterminated_comments(void) {
+    yy_scan_string("(* (* a test *) int\0");
+    assert(yylex() == LEX_ERROR);
+}
+
 int main(void) {
     int size, i;
     void (*lexer_tests[])(void) = {lexer_should_understand_integers,
@@ -114,7 +119,8 @@ int main(void) {
                                    lexer_should_count_lines,
                                    lexer_should_support_inline_comments,
                                    lexer_should_support_nested_comments,
-                                   lexer_should_support_all_chars_inside_comments};
+                                   lexer_should_support_all_chars_inside_comments,
+                                   lexer_should_report_unterminated_comments};
 
     size = sizeof(lexer_tests)/sizeof(lexer_tests[0]);
 
