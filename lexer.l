@@ -1,6 +1,7 @@
 %{
 #include "tokens.h"
 int lineno=1;
+int comment_level=0;
 int ERROR (const char msg []);
 %}
 
@@ -76,11 +77,13 @@ PR [ !#-&\(-\[\]-~]
 [=\|\+\-\*\/\!\;\<\>\(\)\[\]\,\:]   { return yytext[0]; }
 
 "--".+\n                            { lineno++; }
-"(*"                                { BEGIN(COMMENT); }
-<COMMENT>"*)"                       { BEGIN(INITIAL); }
+"(*"                                { BEGIN(COMMENT); comment_level++; }
+<COMMENT>"(*"                       { comment_level++; }
+<COMMENT>"*)"                       { if ( !--comment_level ) BEGIN(INITIAL); }
 <COMMENT>\n                         { lineno++; }
-<COMMENT>"*"                        { /* nothing */ }
-<COMMENT>[^*\n]+                    { /* nothing */ }
+<COMMENT>"("
+<COMMENT>"*"
+<COMMENT>[^(*\n]+
 
 \n                                  { lineno++; }
 [ \t\r]
