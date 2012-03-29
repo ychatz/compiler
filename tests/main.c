@@ -127,18 +127,32 @@ void lexer_should_report_suffix_on_integer_constants(void) {
     assert(yylex() == LEX_ERROR);
 }
 
+void lexer_should_accept_strings(void) {
+    yy_scan_string("\" this is a string that contains \\x012 \\nescape codes\\t \\r\\0\"\0");
+    assert(yylex() == T_sconst);
+}
+
+void lexer_should_report_unterminated_strings(void) {
+    yy_scan_string("\" this is \0");
+    assert(yylex() == LEX_ERROR);
+}
+
 int main(void) {
     int size, i;
-    void (*lexer_tests[])(void) = {lexer_should_understand_integers,
-                                   lexer_should_understand_floats,
-                                   lexer_should_understand_separated_keywords,
-                                   lexer_should_not_understand_strange_characters,
-                                   lexer_should_count_lines,
-                                   lexer_should_support_inline_comments,
-                                   lexer_should_support_nested_comments,
-                                   lexer_should_support_all_chars_inside_comments,
-                                   lexer_should_report_unterminated_comments,
-                                   lexer_should_report_suffix_on_integer_constants};
+    void (*lexer_tests[])(void) = {
+        lexer_should_understand_integers,
+        lexer_should_understand_floats,
+        lexer_should_understand_separated_keywords,
+        lexer_should_not_understand_strange_characters,
+        lexer_should_count_lines,
+        lexer_should_support_inline_comments,
+        lexer_should_support_nested_comments,
+        lexer_should_support_all_chars_inside_comments,
+        lexer_should_report_unterminated_comments,
+        lexer_should_report_suffix_on_integer_constants,
+        lexer_should_accept_strings,
+        lexer_should_report_unterminated_strings
+    };
 
     size = sizeof(lexer_tests)/sizeof(lexer_tests[0]);
 
@@ -146,6 +160,7 @@ int main(void) {
     fflush(stdout);
     for (i=0; i<size; ++i) {
         lexer_tests[i]();
+        yylex_destroy(); /* avoid memory leaks */
         system("sleep 0.05");
         printf("\b\b\b\b%3d%%", 100*(i+1)/size);
         fflush(stdout);
