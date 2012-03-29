@@ -19,7 +19,7 @@ int ERROR(const char msg[]) {
 void assert_failed(const char *func, const char *cond, const char *file,
                    const int line ) {
     char *test_name;
-    size_t test_name_size = strlen(func);
+    size_t test_name_size = strlen(func) + 1;
 
     test_name = (char *)(malloc(sizeof(char) * test_name_size));
     memcpy(test_name, func, test_name_size * sizeof(char));
