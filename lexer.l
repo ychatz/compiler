@@ -5,14 +5,16 @@ int comment_level=0;
 int ERROR (const char msg []);
 %}
 
-/* digits */
+/* decimal digits */
 D [0-9]
-/* hex codes */
+/* hexedecimal digits */
 H [0-9a-fA-F]
 /* escape sequences */
 ES  \\([ntr0\\\'\"]|x{H}{H})
 /* printable characters */
 PR [ !#-&\(-\[\]-~]
+/* letters */
+L [a-zA-Z]
 
 %x COMMENT
 %%
@@ -52,10 +54,12 @@ PR [ !#-&\(-\[\]-~]
 "while"                             { return T_while; }
 "with"                              { return T_with; }
 
-{D}+[a-zA-Z]+                       { return ERROR("Invalid suffix on integer constant\n"); }
+{D}+{L}+                            { return ERROR("Invalid suffix on integer constant\n"); }
 {D}+                                { return T_iconst; }
+{D}+\.{D}+([eE][\+\-]?{D}+)?{L}+    { return ERROR("Invalid suffix on float constant\n");  }
 {D}+\.{D}+([eE][\+\-]?{D}+)?        { return T_fconst; }
 \'({PR}|{ES})\'                     { return T_cconst; }
+\"({PR}|{ES})*\n                    { return ERROR("Missing terminating \" character\n"); }
 \"({PR}|{ES})*\"                    { return T_sconst; }
 
 [a-z][A-Za-z0-9_]*                  { return T_id; }

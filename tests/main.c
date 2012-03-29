@@ -127,6 +127,11 @@ void lexer_should_report_suffix_on_integer_constants(void) {
     assert(yylex() == LEX_ERROR);
 }
 
+void lexer_should_report_suffix_on_float_constants(void) {
+    yy_scan_string("212.01e-1sda\0");
+    assert(yylex() == LEX_ERROR);
+}
+
 void lexer_should_accept_strings(void) {
     yy_scan_string("\" this is a string that contains \\x012 \\nescape codes\\t \\r\\0\"\0");
     assert(yylex() == T_sconst);
@@ -150,6 +155,7 @@ int main(void) {
         lexer_should_support_all_chars_inside_comments,
         lexer_should_report_unterminated_comments,
         lexer_should_report_suffix_on_integer_constants,
+        lexer_should_report_suffix_on_float_constants,
         lexer_should_accept_strings,
         lexer_should_report_unterminated_strings
     };
