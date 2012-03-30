@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
-# The following script compiles every script in the examples/ directory and
-# reports any compilation errors.
+# This script searches for .lla source files in the examples/directory and
+# compiles each one separately, reporting any compilation errors each time.
 
 Dir.chdir("..") if Dir.pwd =~ /tools$/
 
