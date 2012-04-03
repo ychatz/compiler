@@ -16,6 +16,8 @@ PR [ !#-&\(-\[\]-~]
 /* letters */
 L [a-zA-Z]
 
+%option nounput
+
 %x COMMENT
 %%
 "eof"                               { return T_eof; }

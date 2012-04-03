@@ -2,13 +2,13 @@ CFLAGS = -g -Wall
 CC = gcc
 ECHO = /bin/echo
 
-llama: lexer.o main.c
+llama: core/lexer.o core/main.c
 	$(CC) $(CFLAGS) -o $@ $^ -lfl
 
-lexer.c: lexer.l
-	flex -s -o $@ $<
+core/lexer.c: core/lexer.l
+	flex -s --header-file=core/lexer.h -o $@ $<
 
-test: lexer.o tests/main.c tests/helpers.c
+test: core/lexer.o tests/main.c tests/helpers.c
 	@$(ECHO) "* Compiling..."
 	@$(CC) $(CFLAGS) -o llama-test $^ -lfl
 	@./llama-test

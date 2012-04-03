@@ -9,11 +9,9 @@
 #include <errno.h>
 
 #include "tokens.h"
+#include "lexer.h"
 
-extern char *yytext;
-extern FILE *yyin;
 extern int lineno;
-extern int errno;
 
 int ERROR (const char msg []) {
     fprintf(stderr, "ERROR, line %d: %s\n", lineno, msg);

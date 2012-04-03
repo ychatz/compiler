@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../tokens.h"
+#include "../core/tokens.h"
+#include "../core/lexer.h"
 #include "helpers.h"
 #define LEX_ERROR -1
 #define assert(e) do { \
