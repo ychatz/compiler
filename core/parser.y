@@ -54,7 +54,7 @@ void yyerror (const char * msg);
 %token T_op_fexp         "op_fexp"
 %token T_op_and          "op_and"
 %token T_op_or           "op_or"
-%token T_op_struct_neq   "op_struct_neq2008"
+%token T_op_struct_neq   "op_struct_neq"
 %token T_op_leq          "op_leq"
 %token T_op_geq          "op_geq"
 %token T_op_eq           "op_eq"
