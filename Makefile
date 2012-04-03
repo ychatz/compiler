@@ -17,7 +17,7 @@ test: core/lexer.o tests/main.c tests/helpers.c
 .PHONY: test clean distclean
 
 clean:
-	$(RM) lexer.c *.o *~
+	$(RM) core/lexer.c core/*.o test/*.o
 
 distclean: clean
 	$(RM) llama
