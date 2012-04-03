@@ -25,6 +25,8 @@ test: core/lexer.o tests/main.c tests/helpers.c
 
 clean:
 	$(RM) core/lexer.c core/*.o test/*.o
+	$(RM) core/lexer.c core/lexer.h
+	$(RM) core/parser.c core/parser.h core/parser.output
 
 distclean: clean
 	$(RM) llama
