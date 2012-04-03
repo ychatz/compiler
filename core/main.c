@@ -33,10 +33,11 @@ int main (int argc, char **argv) {
         yyin = stdin;
     }
 
-    do {
-        token = yylex();
-        printf("token=%d, lexeme=\"%s\"\n", token, yytext);
-    } while (token != T_eof);
+    yyparse();
+    /* do { */
+    /*     token = yylex(); */
+    /*     printf("token=%d, lexeme=\"%s\"\n", token, yytext); */
+    /* } while (token != T_eof); */
 
     return 0;
 }

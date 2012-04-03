@@ -1,4 +1,5 @@
 %{
+#include "parser.h"
 #include "tokens.h"
 int lineno=1;
 int comment_level=0;
