@@ -5,7 +5,7 @@
 void yyerror (const char * msg);
 %}
 
-%start term
+%start definition
 
 %token T_and             "and"
 %token T_array           "array"
@@ -41,17 +41,17 @@ void yyerror (const char * msg);
 %token T_unit            "unit"
 %token T_while           "while"
 %token T_with            "with"
-%token T_iconst          "iconst"
-%token T_fconst          "fconst"
-%token T_cconst          "cconst"
-%token T_sconst          "sconst"
+%token T_iconst          "int_const"
+%token T_fconst          "float_const"
+%token T_cconst          "char_const"
+%token T_sconst          "string_const"
 
-%token T_op_arrow        "op_arrow"
-%token T_op_fadd         "op_fadd"
-%token T_op_fsub         "op_fsub"
-%token T_op_fmul         "op_fmul"
-%token T_op_fdiv         "op_fdiv"
-%token T_op_fexp         "op_fexp"
+%token T_op_arrow        "->"
+%token T_op_fadd         "+."
+%token T_op_fsub         "-."
+%token T_op_fmul         "*."
+%token T_op_fdiv         "/."
+%token T_op_fexp         "**"
 %token T_op_and          "op_and"
 %token T_op_or           "op_or"
 %token T_op_struct_neq   "op_struct_neq"
@@ -64,12 +64,34 @@ void yyerror (const char * msg);
 %token T_id              "id"
 %token T_constructor     "constructor"
 
+%left '+' '-' "+." "-."
+%left '*' '/' "*." "/." "mod"
+%right "**"
 %%
 
-term: { printf("me trollares"); }
-    | "bool"  { printf("OK\n"); }
+definition: 
+          | "let" "id" '=' expr
+    
 ;
 
+expr: int_expr
+    | float_expr
+;
+
+int_expr: "int_const"
+        | int_expr '+' int_expr
+        | int_expr '-' int_expr
+        | int_expr '*' int_expr
+        | int_expr '/' int_expr
+        | int_expr "mod" int_expr
+
+float_expr: "float_const"
+          | float_expr "+." float_expr
+          | float_expr "-." float_expr
+          | float_expr "*." float_expr
+          | float_expr "/." float_expr
+          | float_expr "**" float_expr
+;
 %%
 
 void yyerror (const char * msg)
