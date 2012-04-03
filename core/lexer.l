@@ -1,6 +1,6 @@
 %{
 #include "parser.h"
-#include "tokens.h"
+#include "llama.h"
 int lineno=1;
 int comment_level=0;
 int ERROR (const char msg []);

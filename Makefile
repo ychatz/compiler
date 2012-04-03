@@ -15,7 +15,8 @@ core/lexer.o: core/lexer.c
 core/lexer.c: core/lexer.l core/parser.h
 	flex -s --header-file=core/lexer.h -o $@ $<
 
-test: core/lexer.o tests/main.c tests/helpers.c
+
+test: core/lexer.o core/parser.o tests/main.c tests/helpers.c tests/lexer.c tests/parser.c
 	@$(ECHO) "* Compiling..."
 	@$(CC) $(CFLAGS) -o llama-test $^ -lfl
 	@./llama-test

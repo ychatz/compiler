@@ -1,11 +1,11 @@
 %{
 #include "lexer.h"
-#include "tokens.h"
+#include "llama.h"
 
 void yyerror (const char * msg);
 %}
 
-%start definition
+%start program
 
 %token T_and             "and"
 %token T_array           "array"
@@ -52,14 +52,14 @@ void yyerror (const char * msg);
 %token T_op_fmul         "*."
 %token T_op_fdiv         "/."
 %token T_op_fexp         "**"
-%token T_op_and          "op_and"
-%token T_op_or           "op_or"
-%token T_op_struct_neq   "op_struct_neq"
-%token T_op_leq          "op_leq"
-%token T_op_geq          "op_geq"
-%token T_op_eq           "op_eq"
-%token T_op_phys_neq     "op_phys_neq"
-%token T_op_assign       "op_assign"
+%token T_op_and          "&&"
+%token T_op_or           "||"
+%token T_op_struct_neq   "<>"
+%token T_op_leq          "<="
+%token T_op_geq          ">="
+%token T_op_eq           "=="
+%token T_op_phys_neq     "!="
+%token T_op_assign       ":="
 
 %token T_id              "id"
 %token T_constructor     "constructor"
@@ -69,33 +69,33 @@ void yyerror (const char * msg);
 %right "**"
 %%
 
-definition: 
-          | "let" "id" '=' expr
-    
+program:
+       | let_definition program
 ;
 
-expr: int_expr
-    | float_expr
+let_definition: "let" "id" '=' expr
+              | "let" "id" ':' type '=' expr
 ;
 
-int_expr: "int_const"
-        | int_expr '+' int_expr
-        | int_expr '-' int_expr
-        | int_expr '*' int_expr
-        | int_expr '/' int_expr
-        | int_expr "mod" int_expr
-
-float_expr: "float_const"
-          | float_expr "+." float_expr
-          | float_expr "-." float_expr
-          | float_expr "*." float_expr
-          | float_expr "/." float_expr
-          | float_expr "**" float_expr
+type: "unit"
+    | "int"
+    | "char"
+    | "bool"
+    | "float"
 ;
+
+expr: "int_const"
+    | "float_const"
+    | expr '+' expr
+    | expr '-' expr
+    | expr '*' expr
+    | expr '/' expr
+    | expr "mod" expr
+    | expr "+." expr
+    | expr "-." expr
+    | expr "*." expr
+    | expr "/." expr
+    | expr "**" expr
+;
+
 %%
-
-void yyerror (const char * msg)
-{
-  fprintf(stderr, "Minibasic: %s\n", msg);
-  exit(1);
-}

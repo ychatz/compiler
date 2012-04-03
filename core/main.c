@@ -8,8 +8,9 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "tokens.h"
+#include "llama.h"
 #include "lexer.h"
+#include "parser.h"
 
 extern int lineno;
 
@@ -18,9 +19,13 @@ int ERROR (const char msg []) {
     exit(1);
 }
 
-int main (int argc, char **argv) {
-    int token;
+void yyerror (const char * msg)
+{
+  fprintf(stderr, "Minibasic: %s\n", msg);
+  exit(1);
+}
 
+int main (int argc, char **argv) {
     if ( argc == 2 ) {
         yyin = fopen(argv[1], "r");
 
