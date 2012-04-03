@@ -1,5 +1,9 @@
-*.o
-lexer.c
+core/*.o
+core/lexer.c
+core/lexer.h
+core/parser.c
+core/parser.h
+core/parser.output
 llama
 llama-test
 llamac
