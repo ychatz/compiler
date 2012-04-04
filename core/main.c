@@ -21,7 +21,7 @@ int ERROR (const char msg []) {
 
 void yyerror (const char * msg)
 {
-  fprintf(stderr, "Minibasic: %s\n", msg);
+  fprintf(stderr, "ERROR, line: %d: %s\n", lineno, msg);
   exit(1);
 }
 

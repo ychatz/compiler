@@ -64,9 +64,16 @@ void yyerror (const char * msg);
 %token T_id              "id"
 %token T_constructor     "constructor"
 
+%nonassoc "let" "in"
+%nonassoc ":="
+%left "||"
+%left "&&"
+%nonassoc '=' "<>" '>' '<' "<=" ">=" "==" "!="
 %left '+' '-' "+." "-."
 %left '*' '/' "*." "/." "mod"
 %right "**"
+%nonassoc "not" "delete"
+%nonassoc '!'
 %%
 
 program:
@@ -75,6 +82,30 @@ program:
 
 let_definition: "let" "id" '=' expr
               | "let" "id" ':' type '=' expr
+              | "let" "mutable" "id"
+              | "let" "mutable" "id" ':' type
+              | "let" "mutable" "id" array_size_def
+              | "let" "mutable" "id" array_size_def ':' type
+              | func_def
+;
+
+func_def: "let" "id" parameter_list '=' expr
+        | "let" "id" parameter_list ':' type '=' expr
+;
+
+parameter_list: parameter
+              | parameter parameter_list
+;
+
+parameter: "id"
+         | '(' "id" ':' type ')'
+;
+
+array_size_def: '[' multi_expr ']'
+;
+
+multi_expr: expr
+          | expr ',' multi_expr
 ;
 
 type: "unit"
@@ -86,6 +117,14 @@ type: "unit"
 
 expr: "int_const"
     | "float_const"
+    | "char_const"
+    | "string_const"
+    | "true"
+    | "false"
+    | "id"
+    | "not" expr
+    | '!' expr
+    | '(' expr ')'
     | expr '+' expr
     | expr '-' expr
     | expr '*' expr
@@ -96,6 +135,18 @@ expr: "int_const"
     | expr "*." expr
     | expr "/." expr
     | expr "**" expr
+    | expr '=' expr
+    | expr "<>" expr
+    | expr '<' expr
+    | expr '>' expr
+    | expr "<=" expr
+    | expr ">=" expr
+    | expr "==" expr
+    | expr "!=" expr
+    | expr "&&" expr
+    | expr "||" expr
+    | expr ":=" expr
+    | let_definition "in" expr
 ;
 
 %%
