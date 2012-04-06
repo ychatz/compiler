@@ -9,7 +9,7 @@ Dir.foreach("examples") do |example|
 
   puts "Running #{example}..."
   `./llama examples/#{example}`
-  if $?.to_i != 0
+  unless $?.success?
     puts "Example file #{example} produced a compilation error!"
     exit 1
   end
