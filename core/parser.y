@@ -77,6 +77,11 @@ void yyerror (const char * msg);
 %nonassoc "not" "delete"
 %nonassoc '!'
 %nonassoc "new"
+
+/* type definition precedence */
+%nonassoc "of"
+%right "->"
+%nonassoc "ref"
 %%
 
 program:
@@ -115,19 +120,11 @@ type: "unit"
     | "bool"
     | "float"
     | '(' type ')'
+    | type "ref"
+    | type "->" type
+    | "array" array_size_def_with_asterisks "of" type
     | "id"
 ;
-/**/
-/*type: "unit"*/
-/*    | "int"*/
-/*    | "char"*/
-/*    | "bool"*/
-/*    | "float"*/
-/*    | '(' type ')'*/
-/*    | type "->" type*/
-/*    | type "ref"*/
-/*    | "array"*/
-/*;*/
 
 func_def: "let" "id" parameter_list '=' expr
         | "let" "id" parameter_list ':' type '=' expr
@@ -144,8 +141,16 @@ parameter: "id"
 array_size_def: '[' multi_expr ']'
 ;
 
+
 multi_expr: expr
           | expr ',' multi_expr
+;
+
+array_size_def_with_asterisks: '[' multi_asterisks ']'
+;
+
+multi_asterisks: '*'
+               | '*' ',' multi_asterisks
 ;
 
 /* http://moodle.softlab.ntua.gr/mod/forum/discuss.php?d=320 */
