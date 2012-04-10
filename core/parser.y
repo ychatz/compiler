@@ -119,20 +119,22 @@ type: "unit"
 ;
 
 /* http://moodle.softlab.ntua.gr/mod/forum/discuss.php?d=320 */
-many_expr_high:
+many_expr_high: expr_high
               | expr_high many_expr_high
+;
 
 expr_high: '!' expr_high
          | '(' expr ')'
+         | "int_const"
+         | "float_const"
+         | "char_const"
+         | "string_const"
+         | "true"
+         | "false"
+         | "id"
 ;
 
-expr: "int_const"
-    | "float_const"
-    | "char_const"
-    | "string_const"
-    | "true"
-    | "false"
-    | "not" expr
+expr: "not" expr
     | expr '+' expr
     | expr '-' expr
     | expr '*' expr
