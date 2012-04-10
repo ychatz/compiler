@@ -66,7 +66,7 @@ void yyerror (const char * msg);
 
 %nonassoc "let" "in"
 %nonassoc ';'
-%nonassoc "if"
+%nonassoc "if" "then"
 %nonassoc ":="
 %left "||"
 %left "&&"
@@ -81,6 +81,7 @@ void yyerror (const char * msg);
 
 program:
        | let_definition program
+       | type_definition program
 ;
 
 let_definition: "let" "id" '=' expr
@@ -91,6 +92,42 @@ let_definition: "let" "id" '=' expr
               | "let" "mutable" "id" array_size_def ':' type
               | func_def
 ;
+
+type_definition: "type" "id" '=' constr_list
+               | "type" "id" '=' constr_list "and" type_definition
+;
+
+constr_list: constructor
+           | constructor '|' constr_list
+;
+
+constructor: "constructor"
+           | "constructor" "of" many_types
+;
+
+many_types: type
+          | type many_types
+;
+
+type: "unit"
+    | "int"
+    | "char"
+    | "bool"
+    | "float"
+    | '(' type ')'
+    | "id"
+;
+/**/
+/*type: "unit"*/
+/*    | "int"*/
+/*    | "char"*/
+/*    | "bool"*/
+/*    | "float"*/
+/*    | '(' type ')'*/
+/*    | type "->" type*/
+/*    | type "ref"*/
+/*    | "array"*/
+/*;*/
 
 func_def: "let" "id" parameter_list '=' expr
         | "let" "id" parameter_list ':' type '=' expr
@@ -111,13 +148,6 @@ multi_expr: expr
           | expr ',' multi_expr
 ;
 
-type: "unit"
-    | "int"
-    | "char"
-    | "bool"
-    | "float"
-;
-
 /* http://moodle.softlab.ntua.gr/mod/forum/discuss.php?d=320 */
 many_expr_high: expr_high
               | expr_high many_expr_high
@@ -132,6 +162,7 @@ expr_high: '!' expr_high
          | "true"
          | "false"
          | "id"
+         | "id" array_size_def
 ;
 
 expr: "not" expr
@@ -163,8 +194,9 @@ expr: "not" expr
     | "for" "id" '=' expr "downto" expr "do" expr "done"
     | "dim" "id"
     | "dim" "int_const" "id"
-    | "id" array_size_def
     | "id" many_expr_high
+    | "if" expr "then" expr
+    | "begin" expr "end"
     | expr_high
 ;
 

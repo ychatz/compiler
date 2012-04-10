@@ -57,6 +57,18 @@ void parser_should_recognize_the_semicolon_separator(void) {
     assert(yyparse()==0);
 }
 
+void parser_should_recognize_type_definitions(void) {
+    yy_scan_string("type color = Red | Green | Blue");
+    assert(yyparse()==0);
+
+    yy_scan_string("type number = Integer of int | Real of float | Complex of float float");
+    assert(yyparse()==0);
+
+    yy_scan_string("type list = Nil | Cons of int list");
+    assert(yyparse()==0);
+}
+
+
 void parser_run_tests(void) {
     int size, i;
     void (*parser_tests[])(void) = {
@@ -67,6 +79,7 @@ void parser_run_tests(void) {
         parser_should_accept_variable_array_definitions,
         parser_should_accept_function_definitions,
         parser_should_recognize_the_semicolon_separator,
+        parser_should_recognize_type_definitions
     };
 
     size = sizeof(parser_tests)/sizeof(parser_tests[0]);
