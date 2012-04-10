@@ -65,6 +65,8 @@ void yyerror (const char * msg);
 %token T_constructor     "constructor"
 
 %nonassoc "let" "in"
+%nonassoc ';'
+%nonassoc "if"
 %nonassoc ":="
 %left "||"
 %left "&&"
@@ -74,6 +76,7 @@ void yyerror (const char * msg);
 %right "**"
 %nonassoc "not" "delete"
 %nonassoc '!'
+%nonassoc "new"
 %%
 
 program:
@@ -115,16 +118,21 @@ type: "unit"
     | "float"
 ;
 
+/* http://moodle.softlab.ntua.gr/mod/forum/discuss.php?d=320 */
+many_expr_high:
+              | expr_high many_expr_high
+
+expr_high: '!' expr_high
+         | '(' expr ')'
+;
+
 expr: "int_const"
     | "float_const"
     | "char_const"
     | "string_const"
     | "true"
     | "false"
-    | "id"
     | "not" expr
-    | '!' expr
-    | '(' expr ')'
     | expr '+' expr
     | expr '-' expr
     | expr '*' expr
@@ -146,7 +154,22 @@ expr: "int_const"
     | expr "&&" expr
     | expr "||" expr
     | expr ":=" expr
+    | expr ';' expr
     | let_definition "in" expr
+    | "while" expr "do" expr "done"
+    | "for" "id" '=' expr "to" expr "do" expr "done"
+    | "for" "id" '=' expr "downto" expr "do" expr "done"
+    | "dim" "id"
+    | "dim" "int_const" "id"
+    | "id" array_size_def
+    | "id" many_expr_high
+    | expr_high
 ;
 
 %%
+
+/*
+    | "id" many_expr
+    | "id" array_size_def
+    | "Id" many_expr
+    */

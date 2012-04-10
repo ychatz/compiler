@@ -39,6 +39,7 @@ int main (int argc, char **argv) {
     }
 
     yyparse();
+    /* int token; */
     /* do { */
     /*     token = yylex(); */
     /*     printf("token=%d, lexeme=\"%s\"\n", token, yytext); */

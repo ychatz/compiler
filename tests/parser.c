@@ -52,6 +52,11 @@ void parser_should_accept_function_definitions(void) {
     assert(yyparse()==0);
 }
 
+void parser_should_recognize_the_semicolon_separator(void) {
+    yy_scan_string("let a = x := !y; y := t");
+    assert(yyparse()==0);
+}
+
 void parser_run_tests(void) {
     int size, i;
     void (*parser_tests[])(void) = {
@@ -61,6 +66,7 @@ void parser_run_tests(void) {
         parser_should_accept_variable_definitions,
         parser_should_accept_variable_array_definitions,
         parser_should_accept_function_definitions,
+        parser_should_recognize_the_semicolon_separator,
     };
 
     size = sizeof(parser_tests)/sizeof(parser_tests[0]);
