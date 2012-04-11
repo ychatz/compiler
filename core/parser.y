@@ -79,8 +79,9 @@ void yyerror (const char * msg);
 %nonassoc "new"
 
 /* type definition precedence */
-%nonassoc "of"
+/* set according to http://moodle.softlab.ntua.gr/mod/forum/discuss.php?d=317 */
 %right "->"
+%nonassoc "of"
 %nonassoc "ref"
 %%
 
