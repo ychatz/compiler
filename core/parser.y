@@ -3,6 +3,7 @@
 #include "llama.h"
 
 void yyerror (const char * msg);
+extern int lineno;
 %}
 
 %start program
@@ -90,14 +91,36 @@ program:
        | type_definition program
 ;
 
-let_definition: "let" "id" '=' expr
-              | "let" "id" ':' type '=' expr
-              | "let" "mutable" "id"
-              | "let" "mutable" "id" ':' type
-              | "let" "mutable" "id" array_size_def
-              | "let" "mutable" "id" array_size_def ':' type
-              | func_def
+let_definition: "let" definition
+              | "let" "rec" definition
+              | "let" definition "and" definition
+              | "let" "rec" definition "and" definition
 ;
+
+definition: "id" parameter_list '=' expr
+          | "id" parameter_list ':' type '=' expr
+          | "mutable" "id"
+          | "mutable" "id" ':' type
+          | "mutable" "id" array_size_def
+          | "mutable" "id" array_size_def ':' type
+;
+
+parameter_list:
+              | parameter parameter_list
+;
+
+parameter: "id"
+         | '(' "id" ':' type ')'
+;
+
+array_size_def: '[' multi_expr ']'
+;
+
+
+multi_expr: expr
+          | expr ',' multi_expr
+;
+
 
 type_definition: "type" "id" '=' constr_list
                | "type" "id" '=' constr_list "and" type_definition
@@ -125,26 +148,6 @@ type: "unit"
     | type "->" type
     | "array" array_size_def_with_asterisks "of" type
     | "id"
-;
-
-func_def: "let" "id" parameter_list '=' expr
-        | "let" "id" parameter_list ':' type '=' expr
-;
-
-parameter_list: parameter
-              | parameter parameter_list
-;
-
-parameter: "id"
-         | '(' "id" ':' type ')'
-;
-
-array_size_def: '[' multi_expr ']'
-;
-
-
-multi_expr: expr
-          | expr ',' multi_expr
 ;
 
 array_size_def_with_asterisks: '[' multi_asterisks ']'
@@ -192,24 +195,19 @@ expr: "not" expr
     | expr "!=" expr
     | expr "&&" expr
     | expr "||" expr
-    | expr ":=" expr
+    | expr ":=" expr { printf("ASSIGN %d\n", lineno); }
     | expr ';' expr
     | let_definition "in" expr
     | "while" expr "do" expr "done"
-    | "for" "id" '=' expr "to" expr "do" expr "done"
+    | "for" "id" '=' expr "to" expr "do" expr "done" { printf("FOR %d\n", lineno); }
     | "for" "id" '=' expr "downto" expr "do" expr "done"
     | "dim" "id"
     | "dim" "int_const" "id"
     | "id" many_expr_high
-    | "if" expr "then" expr
+    | "if" expr "then" expr { printf("IF %d\n", lineno); }
+    | "if" expr "then" expr "else" expr
     | "begin" expr "end"
     | expr_high
 ;
 
 %%
-
-/*
-    | "id" many_expr
-    | "id" array_size_def
-    | "Id" many_expr
-    */

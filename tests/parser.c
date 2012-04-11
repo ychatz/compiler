@@ -55,6 +55,9 @@ void parser_should_accept_function_definitions(void) {
 void parser_should_recognize_the_semicolon_separator(void) {
     yy_scan_string("let a = x := !y; y := t");
     assert(yyparse()==0);
+
+    yy_scan_string("let a = x := !y; y := t; q = 9");
+    assert(yyparse()==0);
 }
 
 void parser_should_recognize_type_definitions(void) {
@@ -65,6 +68,17 @@ void parser_should_recognize_type_definitions(void) {
     assert(yyparse()==0);
 
     yy_scan_string("type list = Nil | Cons of int list");
+    assert(yyparse()==0);
+}
+
+void parser_should_recognize_simple_rec_definitions(void) {
+    yy_scan_string("let rec fact n = if n = 0 then 1 else n * fact (n-1)");
+    assert(yyparse()==0);
+}
+
+void parser_should_recognize_multiple_rec_definitions(void) {
+    yy_scan_string("let rec even n = if n = 0 then true else odd (n-1)\n"
+                   "and odd n = if n = 0 then false else even (n-1)");
     assert(yyparse()==0);
 }
 
@@ -79,7 +93,9 @@ void parser_run_tests(void) {
         parser_should_accept_variable_array_definitions,
         parser_should_accept_function_definitions,
         parser_should_recognize_the_semicolon_separator,
-        parser_should_recognize_type_definitions
+        parser_should_recognize_type_definitions,
+        parser_should_recognize_simple_rec_definitions,
+        parser_should_recognize_multiple_rec_definitions,
     };
 
     size = sizeof(parser_tests)/sizeof(parser_tests[0]);
