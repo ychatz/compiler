@@ -5,7 +5,7 @@ let main =
 		print_string " to ";
 		print_string target;
 		print_string "\n" in
-	let rec hanoi rings source target auxil
+	let rec hanoi rings source target auxil =
 		if rings > 0 then
 		begin
 			hanoi (rings-1) source auxil target;
