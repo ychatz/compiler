@@ -75,7 +75,7 @@ extern int lineno;
 %left '+' '-' "+." "-."
 %left '*' '/' "*." "/." "mod"
 %right "**"
-%nonassoc "not" "delete"
+%nonassoc "not" "delete" INT_POS_SIGN INT_NEG_SIGN FLOAT_POS_SIGN FLOAT_NEG_SIGN
 %nonassoc '!'
 %nonassoc "new"
 
@@ -175,6 +175,10 @@ expr_high: '!' expr_high
 ;
 
 expr: "not" expr
+    | '+' expr %prec INT_POS_SIGN
+    | '-' expr %prec INT_NEG_SIGN
+    | "+." expr %prec FLOAT_POS_SIGN
+    | "-." expr %prec FLOAT_NEG_SIGN
     | expr '+' expr
     | expr '-' expr
     | expr '*' expr
