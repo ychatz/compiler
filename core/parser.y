@@ -65,7 +65,7 @@ void yyerror (const char * msg);
 %token T_constructor     "constructor"
 
 %nonassoc "let" "in"
-%nonassoc ';'
+%left ';'
 %nonassoc "if" "then"
 %nonassoc ":="
 %left "||"
