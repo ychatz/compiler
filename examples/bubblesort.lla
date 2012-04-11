@@ -8,7 +8,7 @@ let bsort x =
 		for i = 0 to dim x - 2 do
 			if !x[i] > !x[i+1] then
 			begin	
-				swap x[i] x[i+1]
+				swap x[i] x[i+1];
 				changed := true
 			end
 		done
@@ -19,7 +19,7 @@ let main =
 		print_string msg;
 		for i = 0 to dim x - 1 do
 			if i > 0 then print_string ", ";
-			prin_int !x[i]
+			print_int !x[i]
 		done;
 		print_string "\n" in
 
