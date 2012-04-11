@@ -34,7 +34,7 @@ let main =
 			begin
 				incr counter;
 				print_int (number + 1);
-				print_string "\n";
+				print_string "\n"
 			end;
 			loop (number + 6)
 		end in
