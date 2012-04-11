@@ -164,6 +164,7 @@ many_expr_high: expr_high
 
 expr_high: '!' expr_high
          | '(' expr ')'
+         | '(' ')'
          | "int_const"
          | "float_const"
          | "char_const"
