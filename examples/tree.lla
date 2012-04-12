@@ -68,7 +68,7 @@ let main =
 				let c1 = treeCount t1
 				and c2 = treeCount t2 in
 				let r = random (1 + c1 + c2) in
-				if r = 0
+				if r = 0 then
 					n
 				else if r <= c1 then
 					choose t1
