@@ -82,6 +82,18 @@ void parser_should_recognize_multiple_rec_definitions(void) {
     assert(yyparse()==0);
 }
 
+void parser_should_recognize_match_expressions(void) {
+    yy_scan_string("let main = match num with\n"
+                   "Integer i -> print_int i\n"
+                   "| Real f -> print_float f\n"
+                   "| Complex re 0.0 -> print_float re\n"
+                   "| Complex 0.0 im -> print_string \"j\"; print_float im\n"
+                   "| Complex re im -> print_float re;\n"
+                   "print_string (if im > 0.0 then \"+j\" else \"-j\");\n"
+                   "print_float (abs_float im)\n"
+                   "end\n");
+    assert(yyparse()==0);
+}
 
 void parser_run_tests(void) {
     int size, i;
@@ -96,6 +108,7 @@ void parser_run_tests(void) {
         parser_should_recognize_type_definitions,
         parser_should_recognize_simple_rec_definitions,
         parser_should_recognize_multiple_rec_definitions,
+        parser_should_recognize_match_expressions,
     };
 
     size = sizeof(parser_tests)/sizeof(parser_tests[0]);

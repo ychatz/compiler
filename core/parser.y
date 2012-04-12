@@ -157,6 +157,28 @@ multi_asterisks: '*'
                | '*' ',' multi_asterisks
 ;
 
+clause_list: pattern "->" expr
+           | pattern "->" expr '|' clause_list
+;
+
+pattern: '+' "int_const" %prec INT_POS_SIGN
+       | '-' "int_const" %prec INT_NEG_SIGN
+       | "int_const"
+       | "+." "float_const" %prec FLOAT_POS_SIGN
+       | "-." "float_const" %prec FLOAT_NEG_SIGN
+       | "float_const"
+       | "char_const"
+       | "true"
+       | "false"
+       | "id"
+       | '(' pattern ')'
+       | "constructor" many_patterns
+;
+
+many_patterns:
+             | pattern many_patterns
+;
+
 /* http://moodle.softlab.ntua.gr/mod/forum/discuss.php?d=320 */
 many_expr_high: expr_high
               | expr_high many_expr_high
@@ -173,6 +195,7 @@ expr_high: '!' expr_high
          | "false"
          | "id"
          | "id" array_size_def
+         | "constructor"
 ;
 
 expr: "not" expr
@@ -200,18 +223,19 @@ expr: "not" expr
     | expr "!=" expr
     | expr "&&" expr
     | expr "||" expr
-    | expr ":=" expr { printf("ASSIGN %d\n", lineno); }
+    | expr ":=" expr
     | expr ';' expr
     | let_definition "in" expr
     | "while" expr "do" expr "done"
-    | "for" "id" '=' expr "to" expr "do" expr "done" { printf("FOR %d\n", lineno); }
+    | "for" "id" '=' expr "to" expr "do" expr "done"
     | "for" "id" '=' expr "downto" expr "do" expr "done"
     | "dim" "id"
     | "dim" "int_const" "id"
     | "id" many_expr_high
-    | "if" expr "then" expr { printf("IF %d\n", lineno); }
+    | "if" expr "then" expr
     | "if" expr "then" expr "else" expr
     | "begin" expr "end"
+    | "match" expr "with" clause_list "end"
     | expr_high
 ;
 
