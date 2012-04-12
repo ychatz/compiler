@@ -91,10 +91,12 @@ program:
        | type_definition program
 ;
 
-let_definition: "let" definition
-              | "let" "rec" definition
-              | "let" definition "and" definition
-              | "let" "rec" definition "and" definition
+let_definition: "let" many_definitions
+              | "let" "rec" many_definitions
+;
+
+many_definitions: definition
+                | definition "and" many_definitions
 ;
 
 definition: "id" parameter_list '=' expr
@@ -121,9 +123,11 @@ multi_expr: expr
           | expr ',' multi_expr
 ;
 
+type_definition: "type" many_type_definitions
+;
 
-type_definition: "type" "id" '=' constr_list
-               | "type" "id" '=' constr_list "and" type_definition
+many_type_definitions: "id" '=' constr_list
+                     | "id" '=' constr_list "and" many_type_definitions
 ;
 
 constr_list: constructor

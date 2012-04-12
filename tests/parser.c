@@ -78,7 +78,15 @@ void parser_should_recognize_simple_rec_definitions(void) {
 
 void parser_should_recognize_multiple_rec_definitions(void) {
     yy_scan_string("let rec even n = if n = 0 then true else odd (n-1)\n"
-                   "and odd n = if n = 0 then false else even (n-1)");
+                   "and odd n = if n = 0 then false else even (n-1)\n"
+                   "and triple = true");
+    assert(yyparse()==0);
+}
+
+void parser_should_recognize_multiple_type_definitions(void) {
+    yy_scan_string("type color = Red | Green | Blue\n"
+                   "and medal = Gold | Silver | Bronze\n"
+                   "and male = Alpha | Beta | Gamma | Delta");
     assert(yyparse()==0);
 }
 
@@ -108,6 +116,7 @@ void parser_run_tests(void) {
         parser_should_recognize_type_definitions,
         parser_should_recognize_simple_rec_definitions,
         parser_should_recognize_multiple_rec_definitions,
+        parser_should_recognize_multiple_type_definitions,
         parser_should_recognize_match_expressions,
     };
 
