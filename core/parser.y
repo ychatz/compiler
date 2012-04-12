@@ -236,6 +236,7 @@ expr: "not" expr
     | "dim" "id"
     | "dim" "int_const" "id"
     | "id" many_expr_high
+    | "constructor" many_expr_high
     | "if" expr "then" expr
     | "if" expr "then" expr "else" expr
     | "begin" expr "end"
