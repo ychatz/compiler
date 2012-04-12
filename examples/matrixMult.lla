@@ -2,7 +2,7 @@ let mmul a b c =
 	if dim 2 a = dim 1 b && dim 1 c = dim 1 a && dim 2 c = dim 2 b then
 	begin
 		for i = 0 to dim 1 c - 1 do
-			for j = 0 to dim 2 c - 1
+			for j = 0 to dim 2 c - 1 do
 				c[i, j] := 0;
 				for k = 0 to dim 2 a - 1 do
 					c[i, j] := !c[i, j] + !a[i, k] * !b[k, j]
