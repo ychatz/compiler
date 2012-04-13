@@ -151,11 +151,9 @@ type: "unit"
     | '(' type ')'
     | type "ref"
     | type "->" type
-    | "array" array_size_def_with_asterisks "of" type
+    | "array" '[' multi_asterisks ']' "of" type
+    | "array" "of" type
     | "id"
-;
-
-array_size_def_with_asterisks: '[' multi_asterisks ']'
 ;
 
 multi_asterisks: '*'
@@ -239,6 +237,8 @@ expr: "not" expr
     | "for" "id" '=' expr "downto" expr "do" expr "done"
     | "dim" "id"
     | "dim" "int_const" "id"
+    | "new" type
+    | "delete" type
     | "id" many_expr_high
     | "constructor" many_expr_high
     | "if" expr "then" expr
