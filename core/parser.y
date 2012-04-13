@@ -7,6 +7,7 @@ extern int lineno;
 %}
 
 %start program
+%expect 23
 
 %token T_and             "and"
 %token T_array           "array"
@@ -165,22 +166,25 @@ clause_list: pattern "->" expr
            | pattern "->" expr '|' clause_list
 ;
 
-pattern: '+' "int_const" %prec INT_POS_SIGN
-       | '-' "int_const" %prec INT_NEG_SIGN
-       | "int_const"
-       | "+." "float_const" %prec FLOAT_POS_SIGN
-       | "-." "float_const" %prec FLOAT_NEG_SIGN
-       | "float_const"
-       | "char_const"
-       | "true"
-       | "false"
-       | "id"
-       | '(' pattern ')'
-       | "constructor" many_patterns
+pattern_high: '+' "int_const" %prec INT_POS_SIGN
+            | '-' "int_const" %prec INT_NEG_SIGN
+            | "int_const"
+            | "+." "float_const" %prec FLOAT_POS_SIGN
+            | "-." "float_const" %prec FLOAT_NEG_SIGN
+            | "float_const"
+            | "char_const"
+            | "true"
+            | "false"
+            | "id"
+            | '(' pattern ')'
 ;
 
-many_patterns:
-             | pattern many_patterns
+pattern: pattern_high
+       | "constructor" many_patterns_high
+;
+
+many_patterns_high:
+                  | pattern_high many_patterns_high
 ;
 
 /* http://moodle.softlab.ntua.gr/mod/forum/discuss.php?d=320 */
