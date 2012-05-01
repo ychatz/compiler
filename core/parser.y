@@ -88,24 +88,31 @@ extern int lineno;
 %%
 
 program:
-       | let_definition program
-       | type_definition program
+      definition_list { ast = ast_program($1);  }
 ;
 
-let_definition: "let" many_definitions
-              | "let" "rec" many_definitions
+definition_list:
+	/* nothing */ { $$ = NULL;  }
+       | let_definition definition_list { $$ = ast_ltdef_list_let($1, $2); }
+       | type_definition definition_list { $$ = ast_ltdef_list_type($1, $2); } 
 ;
 
-many_definitions: definition
-                | definition "and" many_definitions
+
+
+let_definition: "let" many_definitions { $$ = ast_letdef(false, $2);}
+              | "let" "rec" many_definitions { $$ = ast_letdef(true. $3);}
 ;
 
-definition: "id" parameter_list '=' expr
-          | "id" parameter_list ':' type '=' expr
-          | "mutable" "id"
-          | "mutable" "id" ':' type
-          | "mutable" "id" array_size_def
-          | "mutable" "id" array_size_def ':' type
+many_definitions: definition { $$ = ast_def_list ($1, NULL); } 
+                | definition "and" many_definitions { $$ = ast_def_list($1, $3);}
+;
+
+definition: "id" parameter_list '=' expr { $$ = ast_def_normal($1, $2, NULL, $5); }
+          | "id" parameter_list ':' type '=' expr { $$ = ast_def_normal($1, $2, $3, $5); }
+          | "mutable" "id" { $$ = ast_def_mutable($2, NULL, NULL); }
+          | "mutable" "id" ':' type { $$ = ast_def_mutable($2, NULL, $3); }
+          | "mutable" "id" array_size_def { $$ = ast_def_mutable($2, $4, NULL); }
+          | "mutable" "id" array_size_def ':' type { $$ = ast_def_mutable($2, $3, $5); }
 ;
 
 parameter_list:
@@ -116,7 +123,7 @@ parameter: "id"
          | '(' "id" ':' type ')'
 ;
 
-array_size_def: '[' multi_expr ']'
+array_size_def: '[' multi_expr ']' { $$ = $2; }
 ;
 
 
