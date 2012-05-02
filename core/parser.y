@@ -1,9 +1,11 @@
 %{
 #include "lexer.h"
 #include "llama.h"
+#include "ast.h"
 
 void yyerror (const char * msg);
 extern int lineno;
+AST_program ast;
 %}
 
 %start program
@@ -100,22 +102,22 @@ definition_list:
 
 
 let_definition: "let" many_definitions { $$ = ast_letdef(false, $2);}
-              | "let" "rec" many_definitions { $$ = ast_letdef(true. $3);}
+              | "let" "rec" many_definitions { $$ = ast_letdef(true, $3);}
 ;
 
 many_definitions: definition { $$ = ast_def_list ($1, NULL); } 
                 | definition "and" many_definitions { $$ = ast_def_list($1, $3);}
 ;
 
-definition: "id" parameter_list '=' expr { $$ = ast_def_normal($1, $2, NULL, $5); }
-          | "id" parameter_list ':' type '=' expr { $$ = ast_def_normal($1, $2, $3, $5); }
+definition: "id" parameter_list '=' expr { $$ = ast_def_normal($1, $2, NULL, $4); }
+          | "id" parameter_list ':' type '=' expr { $$ = ast_def_normal($1, $2, $3, $6); }
           | "mutable" "id" { $$ = ast_def_mutable($2, NULL, NULL); }
           | "mutable" "id" ':' type { $$ = ast_def_mutable($2, NULL, $3); }
-          | "mutable" "id" array_size_def { $$ = ast_def_mutable($2, $4, NULL); }
+          | "mutable" "id" array_size_def { $$ = ast_def_mutable($2, $3, NULL); }
           | "mutable" "id" array_size_def ':' type { $$ = ast_def_mutable($2, $3, $5); }
 ;
 
-parameter_list:
+parameter_list: { $$ = NULL; }
               | parameter parameter_list
 ;
 
@@ -200,7 +202,7 @@ many_expr_high: expr_high
 expr_high: '!' expr_high
          | '(' expr ')'
          | '(' ')'
-         | "int_const"
+         | "int_const" { $$ = ast_expr_iconst($1); }
          | "float_const"
          | "char_const"
          | "string_const"
@@ -216,7 +218,7 @@ expr: "not" expr
     | '-' expr %prec INT_NEG_SIGN
     | "+." expr %prec FLOAT_POS_SIGN
     | "-." expr %prec FLOAT_NEG_SIGN
-    | expr '+' expr
+    | expr '+' expr { $$ = ast_expr_binop($1, ast_binop_plus, $3); }
     | expr '-' expr
     | expr '*' expr
     | expr '/' expr

@@ -11,8 +11,10 @@
 #include "llama.h"
 #include "lexer.h"
 #include "parser.h"
+#include "ast.h"
 
 extern int lineno;
+extern AST_program ast;
 
 int ERROR (const char msg []) {
     fprintf(stderr, "ERROR, line %d: %s\n", lineno, msg);
@@ -39,6 +41,8 @@ int main (int argc, char **argv) {
     }
 
     yyparse();
+    AST_program_print(stdout, 0, ast);
+
     /* int token; */
     /* do { */
     /*     token = yylex(); */
