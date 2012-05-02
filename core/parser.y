@@ -45,7 +45,7 @@ AST_program ast;
 %token T_unit            "unit"
 %token T_while           "while"
 %token T_with            "with"
-%token T_iconst          "int_const"
+%token <RepInt> T_iconst          "int_const"
 %token T_fconst          "float_const"
 %token T_cconst          "char_const"
 %token T_sconst          "string_const"
@@ -87,6 +87,27 @@ AST_program ast;
 %right "->"
 %nonassoc "of"
 %nonassoc "ref"
+
+
+
+%union {
+   /* ... */
+   AST_ltdef_list    ltdef_list;
+   AST_letdef        letdef;
+   AST_typedef       typdef;
+   AST_def_list      def_list;
+   AST_def           def;
+   AST_expr          expr;
+   /* ... */
+}
+
+%type<ltdef_list> definition_list
+%type<letdef> let_definition
+%type<typdef> type_definition
+%type<def_list> many_definitions
+%type<def> definition
+%type<expr> expr
+
 %%
 
 program:
@@ -99,8 +120,6 @@ definition_list:
        | type_definition definition_list { $$ = ast_ltdef_list_type($1, $2); } 
 ;
 
-
-
 let_definition: "let" many_definitions { $$ = ast_letdef(false, $2);}
               | "let" "rec" many_definitions { $$ = ast_letdef(true, $3);}
 ;
@@ -110,9 +129,9 @@ many_definitions: definition { $$ = ast_def_list ($1, NULL); }
 ;
 
 definition: "id" parameter_list '=' expr { $$ = ast_def_normal($1, $2, NULL, $4); }
-          | "id" parameter_list ':' type '=' expr { $$ = ast_def_normal($1, $2, $3, $6); }
+          | "id" parameter_list ':' type '=' expr { $$ = ast_def_normal($1, $2, $4, $6); }
           | "mutable" "id" { $$ = ast_def_mutable($2, NULL, NULL); }
-          | "mutable" "id" ':' type { $$ = ast_def_mutable($2, NULL, $3); }
+          | "mutable" "id" ':' type { $$ = ast_def_mutable($2, NULL, $4); }
           | "mutable" "id" array_size_def { $$ = ast_def_mutable($2, $3, NULL); }
           | "mutable" "id" array_size_def ':' type { $$ = ast_def_mutable($2, $3, $5); }
 ;
@@ -129,7 +148,7 @@ array_size_def: '[' multi_expr ']' { $$ = $2; }
 ;
 
 
-multi_expr: expr
+multi_expr: expr { $$ = $1; }
           | expr ',' multi_expr
 ;
 
