@@ -45,10 +45,11 @@ AST_program ast;
 %token T_unit            "unit"
 %token T_while           "while"
 %token T_with            "with"
-%token <RepInt> T_iconst          "int_const"
-%token T_fconst          "float_const"
-%token T_cconst          "char_const"
-%token T_sconst          "string_const"
+
+%token <RepInt>      T_iconst          "int_const"
+%token <RepFloat>    T_fconst          "float_const"
+%token <RepChar>     T_cconst          "char_const"
+%token <RepString>   T_sconst          "string_const"
 
 %token T_op_arrow        "->"
 %token T_op_fadd         "+."
@@ -116,7 +117,8 @@ AST_program ast;
    AST_pattern_high  pattern_high;
    AST_type          type;
    AST_multi_expr    multi_expr;
-   AST_many_types    many_types;  
+   AST_many_types    many_types;
+   AST_multi_asterisks int;  
 
    /* Type_list */
    /* ... */
@@ -147,6 +149,7 @@ AST_program ast;
 %type<type> type
 %type<multi_expr> multi_expr
 %type<many_types> many_types
+%type<int> multi_asterisks
 
 %%
 
@@ -219,13 +222,13 @@ type: "unit" 						{ $$ = type_unit(); }
     | '(' type ')'					{ $$ = $2 }
     | type "ref"					{ $$ = type_ref($1); }
     | type "->" type					{ $$ = type_func($1, $3); }
-    | "array" '[' multi_asterisks ']' "of" type		{ $$ = type_array(); } 
+    | "array" '[' multi_asterisks ']' "of" type		{ $$ = type_array($3, $6); } 
     | "array" "of" type					{ $$ = type_array(0, $3); }
     | "id"						{ $$ = type_id($1); }
 ;
 
-multi_asterisks: '*'
-               | '*' ',' multi_asterisks
+multi_asterisks: '*' 					{ $$ = 1; }
+               | '*' ',' multi_asterisks 		{ $$ = 1 + $3; }
 ;
 
 clause_list: clause  				{ $$ = ast_clause_list ($1, NULL); } 
@@ -272,7 +275,7 @@ expr_high: '!' expr_high		{ $$ = ast_expr_unop (ast_unop_exclam, $2); }
          | "true" 			{ $$ = ast_expr_true(); }
          | "false" 			{ $$ = ast_expr_false(); }
          | "id" 			{ $$ = ast_expr_id($1); }
-         | "id" "[" multi_expr "]" 	/* ??? ast_expr_arrel (Identifier id, AST_expr_list l) ??? */
+         | "id" "[" multi_expr "]" 	{ $$ = ast_expr_arrel ($1, $3); } 
          | "constructor" 		{ $$ = ast_expr_Id($1); }
 ;
 
@@ -311,8 +314,8 @@ expr: "not" expr   				{ $$ = ast_expr_unop (ast_unop_not op, $2); }
     | "dim" "int_const" "id" 						{ $$ =  ast_expr_dim ($2, $3); } 
     | "new" type 							{ $$ = ast_expr_new($2); }
     | "delete" type 							{ $$ = ast_expr_delete($2); }
-    | "id" many_expr_high
-    | "constructor" many_expr_high
+    | "id" many_expr_high 						{ $$ = ast_expr_call ($1, $2); }	
+    | "constructor" many_expr_high					{ $$ = ast_expr_Call ($1, $2); }
     | "if" expr "then" expr 						{ $$ = ast_expr_if ($2, $4, NULL); }
     | "if" expr "then" expr "else" expr 				{ $$ = ast_expr_if ($2, $4, $6); }
     | "begin" expr "end"						{ $$ = $2; }
