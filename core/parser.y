@@ -93,7 +93,6 @@ AST_program ast;
 %union {
    /* ... */
 
-   AST_program       program;
    AST_letdef        letdef;
    AST_typedef       typedef;
    AST_def           def;
@@ -112,6 +111,11 @@ AST_program ast;
    AST_expr_list     expr_list;
    AST_clause_list   clause_list;
    AST_pattern_list  pattern_list;
+
+   AST_expr_high     expr_high;
+   AST_pattern_high  pattern_high;
+
+   
 
    /* Type_list */
    /* ... */
@@ -137,6 +141,8 @@ AST_program ast;
 %type<clause_list> clause_list
 %type<pattern_list> many_patterns_high
 
+
+
 %%
 
 program:
@@ -155,14 +161,14 @@ let_definition: "let" many_definitions 		{ $$ = ast_letdef(false, $2);}
 
 many_definitions: definition 				{ $$ = ast_def_list ($1, NULL); } 
                 | definition "and" many_definitions 	{ $$ = ast_def_list($1, $3);}
-;
+;e 
 
 definition: "id" parameter_list '=' expr 		{ $$ = ast_def_normal($1, $2, NULL, $4); }
           | "id" parameter_list ':' type '=' expr 	{ $$ = ast_def_normal($1, $2, $4, $6); }
           | "mutable" "id" 				{ $$ = ast_def_mutable($2, NULL, NULL); }
           | "mutable" "id" ':' type 			{ $$ = ast_def_mutable($2, NULL, $4); }
-          | "mutable" "id" array_size_def 		{ $$ = ast_def_mutable($2, $3, NULL); }
-          | "mutable" "id" array_size_def ':' type 	{ $$ = ast_def_mutable($2, $3, $5); }
+          | "mutable" "id" "[" multi_expr "]" 		{ $$ = ast_def_mutable($2, $4, NULL); }
+          | "mutable" "id" "[" multi_expr "]" ':' type 	{ $$ = ast_def_mutable($2, $4, $5); }
 ;
 
 parameter_list: 
@@ -173,10 +179,6 @@ parameter_list:
 parameter: "id" 			{ $$ = ast_par($1, NULL); }
          | '(' "id" ':' type ')' 	{ $$ = ast_par($2, $4); }
 ;
-
-array_size_def: '[' multi_expr ']' 	{ $$ = $2; }
-;
-
 
 multi_expr: expr 			{ $$ = $1; }
           | expr ',' multi_expr  	{ $$ = ast_expr_list ($1, $3); }  
@@ -213,7 +215,7 @@ type: "unit" 						{ $$ = type_unit(); }
     | type "ref"					{ $$ = type_ref($1); }
     | type "->" type					{ $$ = type_func($1, $3); }
     | "array" '[' multi_asterisks ']' "of" type		{ $$ = type_array(); } 
-    | "array" "of" type					{ $$ = type_array(); }
+    | "array" "of" type					{ $$ = type_array(0, $3); }
     | "id"						{ $$ = type_id($1); }
 ;
 
@@ -245,7 +247,8 @@ pattern: pattern_high 				{ $$ = $1; }
        | "constructor" many_patterns_high 	{ $$ = ast_pattern_Id($1, $2); }
 ;
 
-many_patterns_high: 					{ $$ = NULL; } 
+many_patterns_high:
+		  /* nothing */				{ $$ = NULL; } 
                   | pattern_high many_patterns_high 	{ $$ = ast_pattern_list($1, $2); }
 ;
 
@@ -264,7 +267,7 @@ expr_high: '!' expr_high		{ $$ = ast_expr_unop (ast_unop_exclam, $2); }
          | "true" 			{ $$ = ast_expr_true(); }
          | "false" 			{ $$ = ast_expr_false(); }
          | "id" 			{ $$ = ast_expr_id($1); }
-         | "id" array_size_def 
+         | "id" "[" multi_expr "]" 	/* ??? ast_expr_arrel (Identifier id, AST_expr_list l) ??? */
          | "constructor" 		{ $$ = ast_expr_Id($1); }
 ;
 
@@ -297,8 +300,8 @@ expr: "not" expr   				{ $$ = ast_expr_unop (ast_unop_not op, $2); }
     | expr ';' expr 				{ $$ = ast_expr_binop($1, ast_binop_semicolon, $3); }
     | let_definition "in" expr 						{ $$ = ast_expr_let($1, $3); }
     | "while" expr "do" expr "done" 					{ $$ = ast_expr_while($2, $4); }
-    | "for" "id" '=' expr "to" expr "do" expr "done" 			{ $$ = ast_expr_for ($2, $4, $5, $6, $8); } 
-    | "for" "id" '=' expr "downto" expr "do" expr "done" 		{ $$ = ast_expr_for ($2, $4, $5, $6, $8); } 
+    | "for" "id" '=' expr "to" expr "do" expr "done" 			{ $$ = ast_expr_for ($2, $4, false, $6, $8); } 
+    | "for" "id" '=' expr "downto" expr "do" expr "done" 		{ $$ = ast_expr_for ($2, $4, true, $6, $8); } 
     | "dim" "id" 							{ $$ =  ast_expr_dim (NULL, $2); } 
     | "dim" "int_const" "id" 						{ $$ =  ast_expr_dim ($2, $3); } 
     | "new" type 							{ $$ = ast_expr_new($1); }
