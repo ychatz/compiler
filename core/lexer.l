@@ -3,6 +3,7 @@
 #include "ast.h"
 #include "parser.h"
 #include "llama.h"
+#include "general.h"
 int lineno=1;
 int comment_level=0;
 int ERROR (const char msg []);
@@ -63,12 +64,12 @@ L [a-zA-Z]
 {D}+                                { yylval.intval = atoi(yytext); return T_iconst; }
 {D}+\.{D}+([eE][\+\-]?{D}+)?{L}+    { return ERROR("Invalid suffix on float constant\n");  }
 {D}+\.{D}+([eE][\+\-]?{D}+)?        { yylval.floatval = atof(yytext); return T_fconst; }
-\'({PR}|{ES})\'                     { return T_cconst; }
+\'({PR}|{ES})\'                     { yylval.charval = strdup(yytext); return T_cconst; }
 \"({PR}|{ES})*\n                    { return ERROR("Missing terminating \" character\n"); }
-\"({PR}|{ES})*\"                    { return T_sconst; }
+\"({PR}|{ES})*\"                    { yylval.stringval = strdup(yytext); return T_sconst; }
 
-[a-z][A-Za-z0-9_]*                  { return T_id; }
-[A-Z][A-Za-z0-9_]*                  { return T_constructor; }
+[a-z][A-Za-z0-9_]*                  { yylval.identifier = id_make(yytext); return T_id; }
+[A-Z][A-Za-z0-9_]*                  { yylval.identifier = id_make(yytext); return T_constructor; }
 
 "->"                                { return T_op_arrow; }
 "+."                                { return T_op_fadd; }
