@@ -1,7 +1,7 @@
 %{
+#include "ast.h"
 #include "lexer.h"
 #include "llama.h"
-#include "ast.h"
 
 void yyerror (const char * msg);
 extern int lineno;
@@ -111,11 +111,11 @@ AST_program ast;
    AST_clause_list   clause_list;
    AST_pattern_list  pattern_list;
 
-   AST_expr_high     expr_high;
-   AST_pattern_high  pattern_high;
-   AST_type          type;
-   AST_multi_expr    multi_expr;
-   AST_many_types    many_types;
+   AST_expr          expr_high;
+   AST_pattern       pattern_high;
+   Type              type;
+   AST_expr_list     multi_expr;
+   Type_list         many_types;
    int               multi_asterisks;
 
    /* Type_list */
@@ -209,7 +209,7 @@ constructor: "constructor"  				{ $$ = ast_constr ($1, NULL); }
 ;
 
 many_types: type			{ $$ = $1; }	
-          | type many_types		{ $$ = type_list ($1, $2); }	
+          | type many_types		{ $$ = type_list ($1, $2); }
 ;
 
 type: "unit" 						{ $$ = type_unit(); }
