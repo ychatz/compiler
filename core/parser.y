@@ -92,10 +92,8 @@ AST_program ast;
 
 
 %union {
-   /* ... */
-
    AST_letdef        letdef;
-   AST_typedef       typedef;
+   AST_typedef       typdef;
    AST_def           def;
    AST_tdef          tdef;
    AST_constr        constr;
@@ -118,7 +116,7 @@ AST_program ast;
    AST_type          type;
    AST_multi_expr    multi_expr;
    AST_many_types    many_types;
-   AST_multi_asterisks int;  
+   int               multi_asterisks;
 
    /* Type_list */
    /* ... */
@@ -126,7 +124,7 @@ AST_program ast;
 
 %type<program> program
 %type<letdef> let_definition
-%type<typedef> type_definition
+%type<typdef> type_definition
 %type<def> definition
 %type<tdef> t_definition
 %type<constr> constructor
@@ -149,7 +147,7 @@ AST_program ast;
 %type<type> type
 %type<multi_expr> multi_expr
 %type<many_types> many_types
-%type<int> multi_asterisks
+%type<multi_asterisks> multi_asterisks
 
 %%
 
