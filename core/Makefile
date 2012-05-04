@@ -39,7 +39,7 @@ SRCFILES = $(HFILES) $(CFILES)
 #
 
 %.c %.h: %.l
-	$(LEX) $(LFLAGS) -o$@ $<
+	$(LEX) $(LFLAGS) -olexer.c $<
 
 %.c %.h: %.y
 	$(YACC) $(YFLAGS) -o $@ $<
