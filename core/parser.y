@@ -1,4 +1,5 @@
 %{
+#include <string.h>
 #include "ast.h"
 #include "lexer.h"
 #include "llama.h"
@@ -10,6 +11,42 @@ AST_program ast;
 
 %start program
 %expect 23
+
+%union {
+   AST_letdef        letdef;
+   AST_typedef       typdef;
+   AST_def           def;
+   AST_tdef          tdef;
+   AST_constr        constr;
+   AST_par           par;
+   AST_expr          expr;
+   AST_clause        clause;
+   AST_pattern       pattern;
+
+   AST_ltdef_list    ltdef_list;
+   AST_def_list      def_list;
+   AST_tdef_list     tdef_list;
+   AST_constr_list   constr_list;
+   AST_par_list      par_list;
+   AST_expr_list     expr_list;
+   AST_clause_list   clause_list;
+   AST_pattern_list  pattern_list;
+
+   AST_expr          expr_high;
+   AST_pattern       pattern_high;
+   Type              type;
+   AST_expr_list     multi_expr;
+   Type_list         many_types;
+   int               multi_asterisks;
+
+   /* Type_list */
+   RepInt            intval;
+   RepChar           charval;
+   RepString         stringval;
+   RepFloat          floatval;
+
+   Identifier        identifier;
+}
 
 %token T_and             "and"
 %token T_array           "array"
@@ -46,10 +83,10 @@ AST_program ast;
 %token T_while           "while"
 %token T_with            "with"
 
-%token <RepInt>      T_iconst          "int_const"
-%token <RepFloat>    T_fconst          "float_const"
-%token <RepChar>     T_cconst          "char_const"
-%token <RepString>   T_sconst          "string_const"
+%token <intval>      T_iconst          "int_const"
+%token <floatval>    T_fconst          "float_const"
+%token <charval>     T_cconst          "char_const"
+%token <stringval>   T_sconst          "string_const"
 
 %token T_op_arrow        "->"
 %token T_op_fadd         "+."
@@ -66,8 +103,8 @@ AST_program ast;
 %token T_op_phys_neq     "!="
 %token T_op_assign       ":="
 
-%token <Identifier> T_id              "id"
-%token <Identifier> T_constructor     "constructor"
+%token <identifier> T_id              "id"
+%token <identifier> T_constructor     "constructor"
 
 %nonassoc "let" "in"
 %left ';'
@@ -90,38 +127,7 @@ AST_program ast;
 %nonassoc "ref"
 
 
-
-%union {
-   AST_letdef        letdef;
-   AST_typedef       typdef;
-   AST_def           def;
-   AST_tdef          tdef;
-   AST_constr        constr;
-   AST_par           par;
-   AST_expr          expr;
-   AST_clause        clause;
-   AST_pattern       pattern;
-
-   AST_ltdef_list    ltdef_list;
-   AST_def_list      def_list;
-   AST_tdef_list     tdef_list;
-   AST_constr_list   constr_list;
-   AST_par_list      par_list;
-   AST_expr_list     expr_list;
-   AST_clause_list   clause_list;
-   AST_pattern_list  pattern_list;
-
-   AST_expr          expr_high;
-   AST_pattern       pattern_high;
-   Type              type;
-   AST_expr_list     multi_expr;
-   Type_list         many_types;
-   int               multi_asterisks;
-
-   /* Type_list */
-   /* ... */
-}
-
+/* type definitions of non-terminal symbols */
 %type<program> program
 %type<letdef> let_definition
 %type<typdef> type_definition
@@ -186,7 +192,7 @@ parameter: "id" 			{ $$ = ast_par($1, NULL); }
          | '(' "id" ':' type ')' 	{ $$ = ast_par($2, $4); }
 ;
 
-multi_expr: expr 			{ $$ = $1; }
+multi_expr: expr 			{ $$ = ast_expr_list( $1, NULL); }
           | expr ',' multi_expr  	{ $$ = ast_expr_list ($1, $3); }  
 ;
 

@@ -1,4 +1,5 @@
 %{
+#include <string.h>
 #include "parser.h"
 #include "llama.h"
 int lineno=1;
@@ -58,9 +59,9 @@ L [a-zA-Z]
 "with"                              { return T_with; }
 
 {D}+{L}+                            { return ERROR("Invalid suffix on integer constant\n"); }
-{D}+                                { return T_iconst; }
+{D}+                                { yylval.intval = atoi(yytext); return T_iconst; }
 {D}+\.{D}+([eE][\+\-]?{D}+)?{L}+    { return ERROR("Invalid suffix on float constant\n");  }
-{D}+\.{D}+([eE][\+\-]?{D}+)?        { return T_fconst; }
+{D}+\.{D}+([eE][\+\-]?{D}+)?        { yylval.floatval = atof(yytext); return T_fconst; }
 \'({PR}|{ES})\'                     { return T_cconst; }
 \"({PR}|{ES})*\n                    { return ERROR("Missing terminating \" character\n"); }
 \"({PR}|{ES})*\"                    { return T_sconst; }
