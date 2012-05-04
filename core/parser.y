@@ -92,21 +92,50 @@ AST_program ast;
 
 %union {
    /* ... */
-   AST_ltdef_list    ltdef_list;
+
+   AST_program       program;
    AST_letdef        letdef;
-   AST_typedef       typdef;
-   AST_def_list      def_list;
+   AST_typedef       typedef;
    AST_def           def;
+   AST_tdef          tdef;
+   AST_constr        constr;
+   AST_par           par;
    AST_expr          expr;
+   AST_clause        clause;
+   AST_pattern       pattern;
+
+   AST_ltdef_list    ltdef_list;
+   AST_def_list      def_list;
+   AST_tdef_list     tdef_list;
+   AST_constr_list   constr_list;
+   AST_par_list      par_list;
+   AST_expr_list     expr_list;
+   AST_clause_list   clause_list;
+   AST_pattern_list  pattern_list;
+
+   /* Type_list */
    /* ... */
 }
 
-%type<ltdef_list> definition_list
+%type<program> program
 %type<letdef> let_definition
-%type<typdef> type_definition
-%type<def_list> many_definitions
+%type<typedef> type_definition
 %type<def> definition
+%type<tdef> t_definition
+%type<constr> constructor
+%type<par> parameter
 %type<expr> expr
+%type<clause> clause
+%type<pattern> pattern
+
+%type<ltdef_list> definition_list
+%type<def_list> many_definitions
+%type<tdef_list> many_type_definitions
+%type<constr_list> constr_list
+%type<par_list> parameter_list
+%type<expr_list> many_expr_high
+%type<clause_list> clause_list
+%type<pattern_list> many_patterns_high
 
 %%
 
@@ -175,17 +204,17 @@ many_types: type			{ $$ = $1; }
           | type many_types		{ $$ = type_list ($1, $2); }	
 ;
 
-type: "unit"
-    | "int"
-    | "char"
-    | "bool"
-    | "float"
-    | '(' type ')'
-    | type "ref"
-    | type "->" type
-    | "array" '[' multi_asterisks ']' "of" type
-    | "array" "of" type
-    | "id"
+type: "unit" 						{ $$ = type_unit(); }
+    | "int"						{ $$ = type_int(); }
+    | "char"						{ $$ = type_char(); }
+    | "bool"						{ $$ = type_bool(); }
+    | "float"						{ $$ = type_float(); }
+    | '(' type ')'					{ $$ = $2 }
+    | type "ref"					{ $$ = type_ref($1); }
+    | type "->" type					{ $$ = type_func($1, $3); }
+    | "array" '[' multi_asterisks ']' "of" type		{ $$ = type_array(); } 
+    | "array" "of" type					{ $$ = type_array(); }
+    | "id"						{ $$ = type_id($1); }
 ;
 
 multi_asterisks: '*'
@@ -225,9 +254,9 @@ many_expr_high: expr_high  			{ $$ = ast_expr_list($1, NULL); }
               | expr_high many_expr_high 	{ $$ = ast_expr_list($1, $2); } 
 ;
 
-expr_high: '!' expr_high
-         | '(' expr ')'
-         | '(' ')'
+expr_high: '!' expr_high		{ $$ = ast_expr_unop (ast_unop_exclam, $2); } 
+         | '(' expr ')'			{ $$ = $2; }
+         | '(' ')' 			{ $$ = ast_expr_unit (); }
          | "int_const" 			{ $$ = ast_expr_iconst($1); }
          | "float_const" 		{ $$ = ast_expr_fconst($1); }
          | "char_const" 		{ $$ = ast_expr_cconst($1); }
@@ -239,11 +268,11 @@ expr_high: '!' expr_high
          | "constructor" 		{ $$ = ast_expr_Id($1); }
 ;
 
-expr: "not" expr
-    | '+' expr %prec INT_POS_SIGN
-    | '-' expr %prec INT_NEG_SIGN
-    | "+." expr %prec FLOAT_POS_SIGN
-    | "-." expr %prec FLOAT_NEG_SIGN
+expr: "not" expr   				{ $$ = ast_expr_unop (ast_unop_not op, $2); } 
+    | '+' expr %prec INT_POS_SIGN		{ $$ = ast_expr_unop (ast_unop_plus, $2); } 
+    | '-' expr %prec INT_NEG_SIGN		{ $$ = ast_expr_unop (ast_unop_minus, $2); } 
+    | "+." expr %prec FLOAT_POS_SIGN		{ $$ = ast_expr_unop (ast_unop_fplus, $2); } 
+    | "-." expr %prec FLOAT_NEG_SIGN		{ $$ = ast_expr_unop (ast_unop_fminus, $2); } 
     | expr '+' expr 				{ $$ = ast_expr_binop($1, ast_binop_plus, $3); }
     | expr '-' expr 				{ $$ = ast_expr_binop($1, ast_binop_minus, $3); }
     | expr '*' expr 				{ $$ = ast_expr_binop($1, ast_binop_times, $3); }
@@ -278,7 +307,7 @@ expr: "not" expr
     | "constructor" many_expr_high
     | "if" expr "then" expr 						{ $$ = ast_expr_if ($2, $4, NULL); }
     | "if" expr "then" expr "else" expr 				{ $$ = ast_expr_if ($2, $4, $6); }
-    | "begin" expr "end"
+    | "begin" expr "end"						{ $$ = $2; }
     | "match" expr "with" clause_list "end" 				{ $$ = ast_expr_match ($2, $4); }
     | expr_high 							{ $$ = $1; }
 ;
