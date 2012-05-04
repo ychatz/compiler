@@ -65,8 +65,8 @@ AST_program ast;
 %token T_op_phys_neq     "!="
 %token T_op_assign       ":="
 
-%token T_id              "id"
-%token T_constructor     "constructor"
+%token <Identifier> T_id              "id"
+%token <Identifier> T_constructor     "constructor"
 
 %nonassoc "let" "in"
 %left ';'
@@ -114,8 +114,9 @@ AST_program ast;
 
    AST_expr_high     expr_high;
    AST_pattern_high  pattern_high;
-
-   
+   AST_type          type;
+   AST_multi_expr    multi_expr;
+   AST_many_types    many_types;  
 
    /* Type_list */
    /* ... */
@@ -141,7 +142,11 @@ AST_program ast;
 %type<clause_list> clause_list
 %type<pattern_list> many_patterns_high
 
-
+%type<expr_high> expr_high
+%type<pattern_high> pattern_high
+%type<type> type
+%type<multi_expr> multi_expr
+%type<many_types> many_types
 
 %%
 
@@ -161,14 +166,14 @@ let_definition: "let" many_definitions 		{ $$ = ast_letdef(false, $2);}
 
 many_definitions: definition 				{ $$ = ast_def_list ($1, NULL); } 
                 | definition "and" many_definitions 	{ $$ = ast_def_list($1, $3);}
-;e 
+; 
 
 definition: "id" parameter_list '=' expr 		{ $$ = ast_def_normal($1, $2, NULL, $4); }
           | "id" parameter_list ':' type '=' expr 	{ $$ = ast_def_normal($1, $2, $4, $6); }
           | "mutable" "id" 				{ $$ = ast_def_mutable($2, NULL, NULL); }
           | "mutable" "id" ':' type 			{ $$ = ast_def_mutable($2, NULL, $4); }
           | "mutable" "id" "[" multi_expr "]" 		{ $$ = ast_def_mutable($2, $4, NULL); }
-          | "mutable" "id" "[" multi_expr "]" ':' type 	{ $$ = ast_def_mutable($2, $4, $5); }
+          | "mutable" "id" "[" multi_expr "]" ':' type 	{ $$ = ast_def_mutable($2, $4, $7); }
 ;
 
 parameter_list: 
@@ -304,8 +309,8 @@ expr: "not" expr   				{ $$ = ast_expr_unop (ast_unop_not op, $2); }
     | "for" "id" '=' expr "downto" expr "do" expr "done" 		{ $$ = ast_expr_for ($2, $4, true, $6, $8); } 
     | "dim" "id" 							{ $$ =  ast_expr_dim (NULL, $2); } 
     | "dim" "int_const" "id" 						{ $$ =  ast_expr_dim ($2, $3); } 
-    | "new" type 							{ $$ = ast_expr_new($1); }
-    | "delete" type 							{ $$ = ast_expr_delete($1); }
+    | "new" type 							{ $$ = ast_expr_new($2); }
+    | "delete" type 							{ $$ = ast_expr_delete($2); }
     | "id" many_expr_high
     | "constructor" many_expr_high
     | "if" expr "then" expr 						{ $$ = ast_expr_if ($2, $4, NULL); }
