@@ -199,22 +199,22 @@ multi_expr: expr 			{ $$ = ast_expr_list( $1, NULL); }
 type_definition: "type" many_type_definitions 		{ $$ = ast_typedef($2); }
 ;
 
-many_type_definitions: t_definition 					{ $$ = $1; }		
+many_type_definitions: t_definition 					{ $$ = ast_tdef_list ($1, NULL); } 		
                      | t_definition "and" many_type_definitions 	{ $$ = ast_tdef_list ($1, $3); } 
 ;
 
 t_definition: "id" '=' constr_list 			{ $$ = ast_tdef($1, $3); }
 ;
 
-constr_list: constructor 				{ $$ = $1; }
-           | constructor '|' constr_list 		{ $$ = ast_constr($1, $3); }
+constr_list: constructor 				{ $$ = ast_constr_list($1, NULL); }
+           | constructor '|' constr_list 		{ $$ = ast_constr_list($1, $3); }
 ;
 
 constructor: "constructor"  				{ $$ = ast_constr ($1, NULL); }
            | "constructor" "of" many_types    		{ $$ = ast_constr ($1, $3); }
 ;
 
-many_types: type			{ $$ = $1; }	
+many_types: type			{ $$ = type_list ($1, NULL); }	
           | type many_types		{ $$ = type_list ($1, $2); }
 ;
 
@@ -317,7 +317,7 @@ expr: "not" expr   				{ $$ = ast_expr_unop (ast_unop_not, $2); }
     | "dim" "id" 							{ $$ =  ast_expr_dim (0, $2); } 
     | "dim" "int_const" "id" 						{ $$ =  ast_expr_dim ($2, $3); } 
     | "new" type 							{ $$ = ast_expr_new($2); }
-    | "delete" type 							{ $$ = ast_expr_delete($2); }
+    | "delete" expr 							{ $$ = ast_expr_delete($2); }
     | "id" many_expr_high 						{ $$ = ast_expr_call ($1, $2); }	
     | "constructor" many_expr_high					{ $$ = ast_expr_Call ($1, $2); }
     | "if" expr "then" expr 						{ $$ = ast_expr_if ($2, $4, NULL); }
