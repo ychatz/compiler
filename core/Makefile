@@ -29,7 +29,7 @@ endif
 CFILES   = error.c general.c symbol.c types.c ast.c pretty.c
 HFILES   = error.h general.h symbol.h types.h ast.h pretty.h
 OBJFILES = $(patsubst %.c,%.o,$(CFILES)) parser.o lexer.o main.o
-TMPFILES = parser.h parser.c lexer.c parser.output
+TMPFILES = parser.h parser.c lexer.c parser.output lexer.h
 EXEFILES = llama$(EXE)
 
 SRCFILES = $(HFILES) $(CFILES)
@@ -39,7 +39,7 @@ SRCFILES = $(HFILES) $(CFILES)
 #
 
 %.c %.h: %.l
-	$(LEX) $(LFLAGS) -olexer.c $<
+	$(LEX) $(LFLAGS) --header-file=lexer.h -olexer.c $<
 
 %.c %.h: %.y
 	$(YACC) $(YFLAGS) -o $@ $<

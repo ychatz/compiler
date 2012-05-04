@@ -9,13 +9,14 @@
 #include <errno.h>
 
 #include "llama.h"
+#include "ast.h"
 #include "lexer.h"
 #include "parser.h"
-#include "ast.h"
 #include "pretty.h"
 
 extern int lineno;
 extern AST_program ast;
+extern FILE *yyin;
 
 int ERROR (const char msg []) {
     fprintf(stderr, "ERROR, line %d: %s\n", lineno, msg);
