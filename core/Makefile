@@ -38,7 +38,7 @@ SRCFILES = $(HFILES) $(CFILES)
 # Generic rules
 #
 
-%.c: %.l
+%.c %.h: %.l
 	$(LEX) $(LFLAGS) -o$@ $<
 
 %.c %.h: %.y
@@ -57,15 +57,15 @@ llama$(EXE): $(OBJFILES)
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 lexer.o: lexer.c parser.h
-parser.o: parser.c parser.h lexer.h ast.c
+parser.o: parser.c parser.h lexer.h ast.h
 
 general.o  : general.c general.h error.h
 error.o    : error.c general.h error.h
-symbol.o   : symbol.c symbol.h general.h error.h
+symbol.o   : symbol.c symbol.h general.h error.h types.h
 types.o    : types.c types.h general.h error.h
 ast.o      : ast.c ast.h general.h types.h
 pretty.o   : pretty.c pretty.h general.h types.h ast.h
-main.o     : main.c llama.h lexer.h parser.h ast.h
+main.o     : main.c llama.h parser.h ast.h
 
 clean:
 	$(RM) $(OBJFILES) $(TMPFILES) *~
@@ -75,10 +75,3 @@ distclean: clean
 
 count:
 	wc -l -c Makefile $(SRCFILES)
-
-tar:
-	tar cvfzh bonus.tar.gz Makefile $(SRCFILES)
-
-zip:
-	zip bonus.zip Makefile $(SRCFILES)
-

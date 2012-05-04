@@ -3,7 +3,7 @@
 #include "ast.h"
 #include "lexer.h"
 #include "llama.h"
-
+ 
 void yyerror (const char * msg);
 extern int lineno;
 AST_program ast;
@@ -248,19 +248,19 @@ pattern_high: '+' "int_const" %prec INT_POS_SIGN	 	{ $$ = ast_pattern_iconst($2)
             | "+." "float_const" %prec FLOAT_POS_SIGN 		{ $$ = ast_pattern_fconst($2); }
             | "-." "float_const" %prec FLOAT_NEG_SIGN 		{ $$ = ast_pattern_fconst($2); }
             | "float_const" 					{ $$ = ast_pattern_fconst($1); }
-            | "char_const" 					{ $$ = ast_pattern_fconst($1); }
+            | "char_const" 					{ $$ = ast_pattern_cconst($1); }
             | "true" 						{ $$ = ast_pattern_true(); }
             | "false" 						{ $$ = ast_pattern_false(); }
             | "id" 						{ $$ = ast_pattern_id($1); } 
             | '(' pattern ')' 					{ $$ = $2; } 
 ;
 
-pattern: pattern_high 				{ $$ = $1; } 
+pattern: pattern_high                       { $$ = $1; }
        | "constructor" many_patterns_high 	{ $$ = ast_pattern_Id($1, $2); }
 ;
 
 many_patterns_high:
-		  /* nothing */				{ $$ = NULL; } 
+		          /* nothing */                         { $$ = NULL; } 
                   | pattern_high many_patterns_high 	{ $$ = ast_pattern_list($1, $2); }
 ;
 

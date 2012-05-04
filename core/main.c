@@ -12,6 +12,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "ast.h"
+#include "pretty.h"
 
 extern int lineno;
 extern AST_program ast;

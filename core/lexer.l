@@ -1,5 +1,6 @@
 %{
 #include <string.h>
+#include "ast.h"
 #include "parser.h"
 #include "llama.h"
 int lineno=1;
