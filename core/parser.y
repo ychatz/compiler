@@ -163,12 +163,12 @@ definition_list:
        | type_definition definition_list 	{ $$ = ast_ltdef_list_type($1, $2); } 
 ;
 
-let_definition: "let" many_definitions 		{ $$ = ast_letdef(false, $2);}
-              | "let" "rec" many_definitions 	{ $$ = ast_letdef(true, $3);}
+let_definition: "let" many_definitions 		{ $$ = ast_letdef(false, $2); }
+              | "let" "rec" many_definitions 	{ $$ = ast_letdef(true, $3); }
 ;
 
 many_definitions: definition 				{ $$ = ast_def_list ($1, NULL); } 
-                | definition "and" many_definitions 	{ $$ = ast_def_list($1, $3);}
+                | definition "and" many_definitions 	{ $$ = ast_def_list($1, $3); }
 ; 
 
 definition: "id" parameter_list '=' expr 		{ $$ = ast_def_normal($1, $2, NULL, $4); }
@@ -279,7 +279,7 @@ expr_high: '!' expr_high		{ $$ = ast_expr_unop (ast_unop_exclam, $2); }
          | "constructor" 		{ $$ = ast_expr_Id($1); }
 ;
 
-expr: "not" expr   				{ $$ = ast_expr_unop (ast_unop_not op, $2); } 
+expr: "not" expr   				{ $$ = ast_expr_unop (ast_unop_not, $2); } 
     | '+' expr %prec INT_POS_SIGN		{ $$ = ast_expr_unop (ast_unop_plus, $2); } 
     | '-' expr %prec INT_NEG_SIGN		{ $$ = ast_expr_unop (ast_unop_minus, $2); } 
     | "+." expr %prec FLOAT_POS_SIGN		{ $$ = ast_expr_unop (ast_unop_fplus, $2); } 
@@ -310,7 +310,7 @@ expr: "not" expr   				{ $$ = ast_expr_unop (ast_unop_not op, $2); }
     | "while" expr "do" expr "done" 					{ $$ = ast_expr_while($2, $4); }
     | "for" "id" '=' expr "to" expr "do" expr "done" 			{ $$ = ast_expr_for ($2, $4, false, $6, $8); } 
     | "for" "id" '=' expr "downto" expr "do" expr "done" 		{ $$ = ast_expr_for ($2, $4, true, $6, $8); } 
-    | "dim" "id" 							{ $$ =  ast_expr_dim (NULL, $2); } 
+    | "dim" "id" 							{ $$ =  ast_expr_dim (0, $2); } 
     | "dim" "int_const" "id" 						{ $$ =  ast_expr_dim ($2, $3); } 
     | "new" type 							{ $$ = ast_expr_new($2); }
     | "delete" type 							{ $$ = ast_expr_delete($2); }
