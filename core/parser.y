@@ -158,13 +158,13 @@ AST_program ast;
 %%
 
 program:
-      definition_list 				{ ast = ast_program($1); }
+      definition_list                       { ast = ast_program($1); }
 ;
 
 definition_list:
-	/* nothing */ 				{ $$ = NULL;  }
+	   /* nothing */                        { $$ = NULL;  }
        | let_definition definition_list 	{ $$ = ast_ltdef_list_let($1, $2); }
-       | type_definition definition_list 	{ $$ = ast_ltdef_list_type($1, $2); } 
+       | type_definition definition_list 	{ $$ = ast_ltdef_list_type($1, $2); }
 ;
 
 let_definition: "let" many_definitions 		{ $$ = ast_letdef(false, $2); }

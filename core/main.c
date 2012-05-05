@@ -13,6 +13,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "pretty.h"
+#include "semantic.h"
 
 extern int lineno;
 extern AST_program ast;
@@ -43,7 +44,8 @@ int main (int argc, char **argv) {
     }
 
     yyparse();
-    AST_program_print(stdout, 0, ast);
+    /* AST_program_print(stdout, 0, ast); */
+    AST_program_traverse(ast);
 
     /* int token; */
     /* do { */

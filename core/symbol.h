@@ -26,6 +26,7 @@
    --------------------------------------------------------------------- */
 
 #include <stdbool.h>
+#include "types.h"
 
 
 /* ---------------------------------------------------------------------
@@ -52,6 +53,60 @@ typedef enum {              /* Ψάξε:                             */
     LOOKUP_ALL_SCOPES       /* - σε όλες τις μη κρυφές εμβέλειες */
 } LookupType;
 
+struct SymbolTable_tag {
+   /* Η διαχείριση αυτών των πεδίων γίνεται αυτόματα */
+   unsigned int  hashTableSize;      /* Μέγεθος πίνακα κατακερματισμού */
+   SymbolEntry * hashTable;          /* Πίνακας κατακερματισμού        */
+   Scope         currentScope;       /* Τρέχουσα εμβέλεια              */
+
+   /* Συμπληρώστε ό,τι άλλο θέλετε */
+};
+
+struct SymbolEntry_tag {
+   /* Η διαχείριση αυτών των πεδίων γίνεται αυτόματα */
+   Identifier   id;                 /* Ονομα αναγνωριστικού            */
+   Scope        scope;              /* Εμβέλεια όπου βρίσκεται         */
+   SymbolEntry  nextInHash;         /* Επόμενη εγγραφή στον Π.Κ.       */
+   SymbolEntry  nextInScope;        /* Επόμενη εγγραφή στην εμβέλεια   */
+
+   enum {
+       ENTRY_CONSTANT,
+       ENTRY_FUNCTION,
+       ENTRY_PARAMETER
+   } entry_type;
+
+   union {
+       struct {
+           Type type;
+           union {
+               RepInt v_int;
+               RepChar v_char;
+               RepFloat v_float;
+               RepString v_string;
+           } value;
+       } constant;
+
+      struct {
+         /* SymbolEntry * first_argument; */
+         /* SymbolEntry * last_argument; */
+         Type result_type;
+      } function;
+
+      struct {
+         Type type;
+      } parameter;
+   } e;
+};
+
+struct Scope_tag {
+   /* Η διαχείριση αυτών των πεδίων γίνεται αυτόματα */
+   Scope        parent;                       /* Περιβάλλουσα εμβέλεια */
+   SymbolEntry  entries;                      /* Σύμβολα της εμβέλειας */
+   unsigned int nesting;                      /* Βάθος φωλιάσματος     */
+   bool         hidden;                       /* Κρυφή εμβέλεια ή όχι  */
+
+   /* Συμπληρώστε ό,τι άλλο θέλετε */
+};
 
 /* ---------------------------------------------------------------------
    ------ Πρωτότυπα των συναρτήσεων χειρισμού του πίνακα συμβολών ------
@@ -65,6 +120,5 @@ void        scope_insert  (SymbolTable table, Scope scope);
 SymbolEntry symbol_enter  (SymbolTable table, Identifier id, bool err);
 SymbolEntry symbol_lookup (SymbolTable table, Identifier id, LookupType type,
                            bool err);
-
 
 #endif
