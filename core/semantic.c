@@ -483,7 +483,9 @@ Type AST_binop_traverse (Type expr1, AST_binop op, Type expr2) {
             if ( expr1->kind != expr2->kind )
                 error("Type mismatch: Arguments must be of the same type\n");
             if ( expr1->kind != TYPE_char && expr1->kind != TYPE_float && expr1->kind != TYPE_int )
-                error("Type mismatch: Arguments must be of type char, float or int\n");
+                error("Type mismatch: Left argument must be of type char, float or int\n");
+            if ( expr2->kind != TYPE_char && expr2->kind != TYPE_float && expr2->kind != TYPE_int )
+                error("Type mismatch: Right argument must be of type char, float or int\n");
             return expr1;
 
         /* case ast_binop_le: */
