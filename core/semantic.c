@@ -21,12 +21,36 @@
    ---------------------------- Header files ---------------------------
    --------------------------------------------------------------------- */
 
+#include <string.h>
 #include "error.h"
 #include "ast.h"
 #include "semantic.h"
 #include "symbol.h"
 
 SymbolTable symbol_table;
+
+Identifier to_hash(AST_expr e) {
+    char temp[4000]; /* TODO: Fix this */
+
+    switch (e->kind) {
+        case EXPR_iconst:
+            sprintf(temp, "__int_%d", e->u.e_iconst.rep);
+            break;
+        case EXPR_fconst:
+            sprintf(temp, "__float_%lf", e->u.e_fconst.rep);
+            break;
+        case EXPR_cconst:
+            sprintf(temp, "__float_%s", e->u.e_cconst.rep);
+            break;
+        case EXPR_strlit:
+            sprintf(temp, "__char_%s", e->u.e_cconst.rep);
+            break;
+        default:
+            internal("Can't convert expression tag to hash\n");
+    }
+
+    return id_make(temp);
+}
 
 /* ---------------------------------------------------------------------
    ---- Implementation of functions required by the abstract syntax ----
@@ -172,8 +196,7 @@ void AST_def_traverse (AST_def d)
             scope_open(symbol_table);
 
             AST_par_list_traverse(d->u.d_normal.list);
-            /* Type_print(f, prec+1, d->u.d_normal.type); */
-            /* UNCOMMENT THIS: AST_expr_traverse(d->u.d_normal.expr); */
+            AST_expr_traverse(d->u.d_normal.expr);
 
             scope_close(symbol_table);
             break;
@@ -229,141 +252,154 @@ void AST_par_traverse (AST_par p)
    entry->e.parameter.type = p->type;
 }
 
-/* void AST_expr_print (FILE * f, int prec, AST_expr e) */
-/* { */
-/*    indent(f, prec); */
-/*    if (e == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    switch (e->kind) { */
-/*       case EXPR_iconst: */
-/*          fprintf(f, "ast_expr: iconst (\n"); */
-/*          RepInt_print(f, prec+1, e->u.e_iconst.rep); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_fconst: */
-/*          fprintf(f, "ast_expr: fconst (\n"); */
-/*          RepFloat_print(f, prec+1, e->u.e_fconst.rep); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_cconst: */
-/*          fprintf(f, "ast_expr: cconst (\n"); */
-/*          RepChar_print(f, prec+1, e->u.e_cconst.rep); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_strlit: */
-/*          fprintf(f, "ast_expr: strlit (\n"); */
-/*          RepString_print(f, prec+1, e->u.e_strlit.rep); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_true: */
-/*          fprintf(f, "ast_expr: true\n"); */
-/*          break; */
-/*       case EXPR_false: */
-/*          fprintf(f, "ast_expr: false\n"); */
-/*          break; */
-/*       case EXPR_unit: */
-/*          fprintf(f, "ast_expr: unit\n"); */
-/*          break; */
-/*       case EXPR_unop: */
-/*          fprintf(f, "ast_expr: unop (\n"); */
-/*          AST_unop_print(f, prec+1, e->u.e_unop.op); */
-/*          AST_expr_print(f, prec+1, e->u.e_unop.expr); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_binop: */
-/*          fprintf(f, "ast_expr: binop (\n"); */
-/*          AST_binop_print(f, prec+1, e->u.e_binop.op); */
-/*          AST_expr_print(f, prec+1, e->u.e_binop.expr1); */
-/*          AST_expr_print(f, prec+1, e->u.e_binop.expr2); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_id: */
-/*          fprintf(f, "ast_expr: id (\n"); */
-/*          Identifier_print(f, prec+1, e->u.e_id.id); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_Id: */
-/*          fprintf(f, "ast_expr: Id (\n"); */
-/*          Identifier_print(f, prec+1, e->u.e_Id.id); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_call: */
-/*          fprintf(f, "ast_expr: call (\n"); */
-/*          Identifier_print(f, prec+1, e->u.e_call.id); */
-/*          AST_expr_list_print(f, prec+1, e->u.e_call.list); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_Call: */
-/*          fprintf(f, "ast_expr: Call (\n"); */
-/*          Identifier_print(f, prec+1, e->u.e_Call.id); */
-/*          AST_expr_list_print(f, prec+1, e->u.e_Call.list); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_arrel: */
-/*          fprintf(f, "ast_expr: arrel (\n"); */
-/*          Identifier_print(f, prec+1, e->u.e_arrel.id); */
-/*          AST_expr_list_print(f, prec+1, e->u.e_arrel.list); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_dim: */
-/*          fprintf(f, "ast_expr: dim (\n"); */
-/*          indent(f, prec+1); */
-/*          fprintf(f, "dim = %d\n", e->u.e_dim.dim); */
-/*          Identifier_print(f, prec+1, e->u.e_dim.id); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_new: */
-/*          fprintf(f, "ast_expr: new (\n"); */
-/*          Type_print(f, prec+1, e->u.e_new.type); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_delete: */
-/*          fprintf(f, "ast_expr: delete (\n"); */
-/*          AST_expr_print(f, prec+1, e->u.e_delete.expr); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_let: */
-/*          fprintf(f, "ast_expr: let (\n"); */
-/*          AST_letdef_print(f, prec+1, e->u.e_let.def); */
-/*          AST_expr_print(f, prec+1, e->u.e_let.expr); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_if: */
-/*          fprintf(f, "ast_expr: if (\n"); */
-/*          AST_expr_print(f, prec+1, e->u.e_if.econd); */
-/*          AST_expr_print(f, prec+1, e->u.e_if.ethen); */
-/*          AST_expr_print(f, prec+1, e->u.e_if.eelse); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_while: */
-/*          fprintf(f, "ast_expr: while (\n"); */
-/*          AST_expr_print(f, prec+1, e->u.e_while.econd); */
-/*          AST_expr_print(f, prec+1, e->u.e_while.ebody); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_for: */
-/*          fprintf(f, "ast_expr: for (\n"); */
-/*          Identifier_print(f, prec+1, e->u.e_for.id); */
-/*          AST_expr_print(f, prec+1, e->u.e_for.expr1); */
-/*          indent(f, prec+1); */
-/*          fprintf(f, "downFlag = %s\n", e->u.e_for.downFlag ? "true" : "false"); */
-/*          AST_expr_print(f, prec+1, e->u.e_for.expr2); */
-/*          AST_expr_print(f, prec+1, e->u.e_for.ebody); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case EXPR_match: */
-/*          fprintf(f, "ast_expr: match (\n"); */
-/*          AST_expr_print(f, prec+1, e->u.e_match.expr); */
-/*          AST_clause_list_print(f, prec+1, e->u.e_match.list); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       default: */
-/*          internal("invalid AST"); */
-/*    } */
-/* } */
-/*  */
+Type AST_expr_traverse (AST_expr e) {
+    SymbolEntry entry;
+    Type expr1_type, expr2_type;
+
+    if (e == NULL) {
+        /* fprintf(f, "<<NULL>>\n"); */
+        return NULL;
+    }
+    switch (e->kind) {
+        case EXPR_iconst:
+            entry = symbol_enter(symbol_table, to_hash(e), 0);
+            entry->entry_type = ENTRY_CONSTANT;
+            entry->e.constant.type = type_int();
+            entry->e.constant.value.v_int = e->u.e_iconst.rep;
+
+            return entry->e.constant.type;
+            break;
+        case EXPR_fconst:
+            entry = symbol_enter(symbol_table, to_hash(e), 0);
+            entry->entry_type = ENTRY_CONSTANT;
+            entry->e.constant.type = type_float();
+            entry->e.constant.value.v_float = e->u.e_fconst.rep;
+
+            return entry->e.constant.type;
+            break;
+        case EXPR_cconst:
+            entry = symbol_enter(symbol_table, to_hash(e), 0);
+            entry->entry_type = ENTRY_CONSTANT;
+            entry->e.constant.type = type_char();
+            entry->e.constant.value.v_char = e->u.e_cconst.rep;
+
+            return entry->e.constant.type;
+            break;
+        case EXPR_strlit:
+            entry = symbol_enter(symbol_table, to_hash(e), 0);
+            entry->entry_type = ENTRY_CONSTANT;
+            entry->e.constant.type = type_array(1, type_char());
+            entry->e.constant.value.v_strlit = e->u.e_strlit.rep;
+
+            return entry->e.constant.type;
+            break;
+        /* case EXPR_true: */
+        /*     fprintf(f, "ast_expr: true\n"); */
+        /*     break; */
+        /* case EXPR_false: */
+        /*     fprintf(f, "ast_expr: false\n"); */
+        /*     break; */
+        /* case EXPR_unit: */
+        /*     fprintf(f, "ast_expr: unit\n"); */
+        /*     break; */
+        /* case EXPR_unop: */
+        /*     fprintf(f, "ast_expr: unop (\n"); */
+        /*     AST_unop_print(f, prec+1, e->u.e_unop.op); */
+        /*     AST_expr_print(f, prec+1, e->u.e_unop.expr); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        case EXPR_binop:
+            expr1_type = AST_expr_traverse(e->u.e_binop.expr1);
+            expr2_type = AST_expr_traverse(e->u.e_binop.expr2);
+            AST_binop_traverse(expr1_type, e->u.e_binop.op, expr2_type);
+            break;
+        /* case EXPR_id: */
+        /*     fprintf(f, "ast_expr: id (\n"); */
+        /*     Identifier_print(f, prec+1, e->u.e_id.id); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_Id: */
+        /*     fprintf(f, "ast_expr: Id (\n"); */
+        /*     Identifier_print(f, prec+1, e->u.e_Id.id); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_call: */
+        /*     fprintf(f, "ast_expr: call (\n"); */
+        /*     Identifier_print(f, prec+1, e->u.e_call.id); */
+        /*     AST_expr_list_print(f, prec+1, e->u.e_call.list); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_Call: */
+        /*     fprintf(f, "ast_expr: Call (\n"); */
+        /*     Identifier_print(f, prec+1, e->u.e_Call.id); */
+        /*     AST_expr_list_print(f, prec+1, e->u.e_Call.list); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_arrel: */
+        /*     fprintf(f, "ast_expr: arrel (\n"); */
+        /*     Identifier_print(f, prec+1, e->u.e_arrel.id); */
+        /*     AST_expr_list_print(f, prec+1, e->u.e_arrel.list); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_dim: */
+        /*     fprintf(f, "ast_expr: dim (\n"); */
+        /*     indent(f, prec+1); */
+        /*     fprintf(f, "dim = %d\n", e->u.e_dim.dim); */
+        /*     Identifier_print(f, prec+1, e->u.e_dim.id); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_new: */
+        /*     fprintf(f, "ast_expr: new (\n"); */
+        /*     Type_print(f, prec+1, e->u.e_new.type); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_delete: */
+        /*     fprintf(f, "ast_expr: delete (\n"); */
+        /*     AST_expr_print(f, prec+1, e->u.e_delete.expr); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_let: */
+        /*     fprintf(f, "ast_expr: let (\n"); */
+        /*     AST_letdef_print(f, prec+1, e->u.e_let.def); */
+        /*     AST_expr_print(f, prec+1, e->u.e_let.expr); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_if: */
+        /*     fprintf(f, "ast_expr: if (\n"); */
+        /*     AST_expr_print(f, prec+1, e->u.e_if.econd); */
+        /*     AST_expr_print(f, prec+1, e->u.e_if.ethen); */
+        /*     AST_expr_print(f, prec+1, e->u.e_if.eelse); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_while: */
+        /*     fprintf(f, "ast_expr: while (\n"); */
+        /*     AST_expr_print(f, prec+1, e->u.e_while.econd); */
+        /*     AST_expr_print(f, prec+1, e->u.e_while.ebody); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_for: */
+        /*     fprintf(f, "ast_expr: for (\n"); */
+        /*     Identifier_print(f, prec+1, e->u.e_for.id); */
+        /*     AST_expr_print(f, prec+1, e->u.e_for.expr1); */
+        /*     indent(f, prec+1); */
+        /*     fprintf(f, "downFlag = %s\n", e->u.e_for.downFlag ? "true" : "false"); */
+        /*     AST_expr_print(f, prec+1, e->u.e_for.expr2); */
+        /*     AST_expr_print(f, prec+1, e->u.e_for.ebody); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        /* case EXPR_match: */
+        /*     fprintf(f, "ast_expr: match (\n"); */
+        /*     AST_expr_print(f, prec+1, e->u.e_match.expr); */
+        /*     AST_clause_list_print(f, prec+1, e->u.e_match.list); */
+        /*     indent(f, prec); fprintf(f, ")\n"); */
+        /*     break; */
+        default:
+            internal("invalid AST");
+    }
+
+    return NULL;
+}
+
 /* void AST_clause_print (FILE * f, int prec, AST_clause c) */
 /* { */
 /*    indent(f, prec); */
@@ -448,81 +484,74 @@ void AST_par_traverse (AST_par p)
 /*          internal("invalid AST"); */
 /*    } */
 /* } */
-/*  */
-/* void AST_binop_print (FILE * f, int prec, AST_binop op) */
-/* { */
-/*    indent(f, prec); */
-/*    switch (op) { */
-/*       case ast_binop_plus: */
-/*          fprintf(f, "ast_binop_plus\n"); */
-/*          break; */
-/*       case ast_binop_minus: */
-/*          fprintf(f, "ast_binop_minus\n"); */
-/*          break; */
-/*       case ast_binop_times: */
-/*          fprintf(f, "ast_binop_times\n"); */
-/*          break; */
-/*       case ast_binop_div: */
-/*          fprintf(f, "ast_binop_div\n"); */
-/*          break; */
-/*       case ast_binop_fplus: */
-/*          fprintf(f, "ast_binop_fplus\n"); */
-/*          break; */
-/*       case ast_binop_fminus: */
-/*          fprintf(f, "ast_binop_fminus\n"); */
-/*          break; */
-/*       case ast_binop_ftimes: */
-/*          fprintf(f, "ast_binop_ftimes\n"); */
-/*          break; */
-/*       case ast_binop_fdiv: */
-/*          fprintf(f, "ast_binop_fdiv\n"); */
-/*          break; */
-/*       case ast_binop_mod: */
-/*          fprintf(f, "ast_binop_mod\n"); */
-/*          break; */
-/*       case ast_binop_exp: */
-/*          fprintf(f, "ast_binop_exp\n"); */
-/*          break; */
-/*       case ast_binop_eq: */
-/*          fprintf(f, "ast_binop_eq\n"); */
-/*          break; */
-/*       case ast_binop_ne: */
-/*          fprintf(f, "ast_binop_ne\n"); */
-/*          break; */
-/*       case ast_binop_lt: */
-/*          fprintf(f, "ast_binop_lt\n"); */
-/*          break; */
-/*       case ast_binop_gt: */
-/*          fprintf(f, "ast_binop_gt\n"); */
-/*          break; */
-/*       case ast_binop_le: */
-/*          fprintf(f, "ast_binop_le\n"); */
-/*          break; */
-/*       case ast_binop_ge: */
-/*          fprintf(f, "ast_binop_ge\n"); */
-/*          break; */
-/*       case ast_binop_pheq: */
-/*          fprintf(f, "ast_binop_pheq\n"); */
-/*          break; */
-/*       case ast_binop_phne: */
-/*          fprintf(f, "ast_binop_phne\n"); */
-/*          break; */
-/*       case ast_binop_and: */
-/*          fprintf(f, "ast_binop_and\n"); */
-/*          break; */
-/*       case ast_binop_or: */
-/*          fprintf(f, "ast_binop_or\n"); */
-/*          break; */
-/*       case ast_binop_semicolon: */
-/*          fprintf(f, "ast_binop_semicolon\n"); */
-/*          break; */
-/*       case ast_binop_assign: */
-/*          fprintf(f, "ast_binop_assign\n"); */
-/*          break; */
-/*       default: */
-/*          internal("invalid AST"); */
-/*    } */
-/* } */
+
+void AST_binop_traverse (Type expr1, AST_binop op, Type expr2) {
+    switch (op) {
+        case ast_binop_plus:
+        case ast_binop_minus:
+        case ast_binop_times:
+        case ast_binop_div:
+            if ( expr1->kind != TYPE_int ) error("Type mismatch in the left argument\n");
+            if ( expr2->kind != TYPE_int ) error("Type mismatch in the right argument\n");
+            break;
+        /* case ast_binop_fplus: */
+        /*     fprintf(f, "ast_binop_fplus\n"); */
+        /*     break; */
+        /* case ast_binop_fminus: */
+        /*     fprintf(f, "ast_binop_fminus\n"); */
+        /*     break; */
+        /* case ast_binop_ftimes: */
+        /*     fprintf(f, "ast_binop_ftimes\n"); */
+        /*     break; */
+        /* case ast_binop_fdiv: */
+        /*     fprintf(f, "ast_binop_fdiv\n"); */
+        /*     break; */
+        /* case ast_binop_mod: */
+        /*     fprintf(f, "ast_binop_mod\n"); */
+        /*     break; */
+        /* case ast_binop_exp: */
+        /*     fprintf(f, "ast_binop_exp\n"); */
+        /*     break; */
+        /* case ast_binop_eq: */
+        /*     fprintf(f, "ast_binop_eq\n"); */
+        /*     break; */
+        /* case ast_binop_ne: */
+        /*     fprintf(f, "ast_binop_ne\n"); */
+        /*     break; */
+        /* case ast_binop_lt: */
+        /*     fprintf(f, "ast_binop_lt\n"); */
+        /*     break; */
+        /* case ast_binop_gt: */
+        /*     fprintf(f, "ast_binop_gt\n"); */
+        /*     break; */
+        /* case ast_binop_le: */
+        /*     fprintf(f, "ast_binop_le\n"); */
+        /*     break; */
+        /* case ast_binop_ge: */
+        /*     fprintf(f, "ast_binop_ge\n"); */
+        /*     break; */
+        /* case ast_binop_pheq: */
+        /*     fprintf(f, "ast_binop_pheq\n"); */
+        /*     break; */
+        /* case ast_binop_phne: */
+        /*     fprintf(f, "ast_binop_phne\n"); */
+        /*     break; */
+        /* case ast_binop_and: */
+        /*     fprintf(f, "ast_binop_and\n"); */
+        /*     break; */
+        /* case ast_binop_or: */
+        /*     fprintf(f, "ast_binop_or\n"); */
+        /*     break; */
+        /* case ast_binop_semicolon: */
+        /*     fprintf(f, "ast_binop_semicolon\n"); */
+        /*     break; */
+        /* case ast_binop_assign: */
+        /*     fprintf(f, "ast_binop_assign\n"); */
+        /*     break; */
+        default:
+            internal("invalid AST");
+    }
+}
 
 void AST_ltdef_list_traverse (AST_ltdef_list l)
 {
@@ -537,12 +566,12 @@ void AST_ltdef_list_traverse (AST_ltdef_list l)
             AST_ltdef_list_traverse(l->tail);
             scope_close(symbol_table);
             break;
-        /* case LTDEF_type: */
-        /*     scope_open(symbol_table); */
-        /*     AST_typedef_traverse(l->head.typdef); */
-        /*     AST_ltdef_list_traverse(l->tail); */
-        /*     scope_close(symbol_table); */
-        /*     break; */
+            /* case LTDEF_type: */
+            /*     scope_open(symbol_table); */
+            /*     AST_typedef_traverse(l->head.typdef); */
+            /*     AST_ltdef_list_traverse(l->tail); */
+            /*     scope_close(symbol_table); */
+            /*     break; */
         default:
             internal("invalid AST");
     }
@@ -586,12 +615,12 @@ void AST_def_list_traverse (AST_def_list l)
 
 void AST_par_list_traverse (AST_par_list l)
 {
-   if (l == NULL) {
-      /*fprintf(f, "<<NULL>>\n");*/
-      return;
-   }
-   AST_par_traverse(l->head);
-   AST_par_list_traverse(l->tail);
+    if (l == NULL) {
+        /*fprintf(f, "<<NULL>>\n");*/
+        return;
+    }
+    AST_par_traverse(l->head);
+    AST_par_list_traverse(l->tail);
 }
 
 /* void AST_expr_list_print (FILE * f, int prec, AST_expr_list l) */

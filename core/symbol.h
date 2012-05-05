@@ -82,7 +82,7 @@ struct SymbolEntry_tag {
                RepInt v_int;
                RepChar v_char;
                RepFloat v_float;
-               RepString v_string;
+               RepString v_strlit;
            } value;
        } constant;
 

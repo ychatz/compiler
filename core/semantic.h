@@ -49,12 +49,12 @@ void AST_def_traverse          (AST_def);
 /* void AST_tdef_traverse            (AST_tdef); */
 /* void AST_constr_traverse          (AST_constr); */
 /* void AST_par_traverse             (AST_par); */
-/* void AST_expr_traverse            (AST_expr); */
+Type AST_expr_traverse            (AST_expr);
 /* void AST_clause_traverse          (AST_clause); */
 /* void AST_pattern_traverse         (AST_pattern); */
 /*  */
 /* void AST_unop_traverse            (AST_unop); */
-/* void AST_binop_traverse           (AST_binop); */
+void AST_binop_traverse           (Type, AST_binop, Type);
 
 void AST_ltdef_list_traverse   (AST_ltdef_list);
 void AST_def_list_traverse     (AST_def_list);
