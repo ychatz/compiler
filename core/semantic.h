@@ -34,14 +34,6 @@
    ------------------------ Function prototypes ------------------------
    --------------------------------------------------------------------- */
 
-/* void Identifier_traverse       (FILE *, int, Identifier); */
-/* void Type_traverse             (FILE *, int, Type); */
-/*  */
-/* void RepInt_traverse           (FILE *, int, RepInt); */
-/* void RepFloat_traverse         (FILE *, int, RepFloat); */
-/* void RepChar_traverse          (FILE *, int, RepChar); */
-/* void RepString_traverse        (FILE *, int, RepString); */
-
 void AST_program_traverse      (AST_program);
 void AST_letdef_traverse       (AST_letdef);
 /* void AST_typedef_print         (AST_typedef); */
@@ -54,7 +46,7 @@ Type AST_expr_traverse            (AST_expr);
 /* void AST_pattern_traverse         (AST_pattern); */
 /*  */
 /* void AST_unop_traverse            (AST_unop); */
-void AST_binop_traverse           (Type, AST_binop, Type);
+Type AST_binop_traverse           (Type, AST_binop, Type);
 
 void AST_ltdef_list_traverse   (AST_ltdef_list);
 void AST_def_list_traverse     (AST_def_list);

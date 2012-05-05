@@ -56,16 +56,6 @@ Identifier to_hash(AST_expr e) {
    ---- Implementation of functions required by the abstract syntax ----
    --------------------------------------------------------------------- */
 
-/* void Identifier_print (FILE * f, int prec, Identifier id) */
-/* { */
-/*    indent(f, prec); */
-/*    if (id == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "Identifier: \"%s\"\n", id_name(id)); */
-/* } */
-/*  */
 /* void Type_print (FILE * f, int prec, Type type) */
 /* { */
 /*    indent(f, prec); */
@@ -115,30 +105,6 @@ Identifier to_hash(AST_expr e) {
 /*       default: */
 /*          internal("invalid AST"); */
 /*    } */
-/* } */
-/*  */
-/* void RepInt_print (FILE * f, int prec, RepInt r) */
-/* { */
-/*    indent(f, prec); */
-/*    fprintf(f, "%d\n", r); */
-/* } */
-/*  */
-/* void RepFloat_print (FILE * f, int prec, RepFloat r) */
-/* { */
-/*    indent(f, prec); */
-/*    fprintf(f, "%f\n", r); */
-/* } */
-/*  */
-/* void RepChar_print (FILE * f, int prec, RepChar r) */
-/* { */
-/*    indent(f, prec); */
-/*    fprintf(f, "%s\n", r); */
-/* } */
-/*  */
-/* void RepString_print (FILE * f, int prec, RepString r) */
-/* { */
-/*    indent(f, prec); */
-/*    fprintf(f, "%s\n", r); */
 /* } */
 
 void AST_program_traverse (AST_program p)
@@ -485,7 +451,7 @@ Type AST_expr_traverse (AST_expr e) {
 /*    } */
 /* } */
 
-void AST_binop_traverse (Type expr1, AST_binop op, Type expr2) {
+Type AST_binop_traverse (Type expr1, AST_binop op, Type expr2) {
     switch (op) {
         case ast_binop_plus:
         case ast_binop_minus:
@@ -493,37 +459,33 @@ void AST_binop_traverse (Type expr1, AST_binop op, Type expr2) {
         case ast_binop_div:
             if ( expr1->kind != TYPE_int ) error("Type mismatch in the left argument\n");
             if ( expr2->kind != TYPE_int ) error("Type mismatch in the right argument\n");
-            break;
-        /* case ast_binop_fplus: */
-        /*     fprintf(f, "ast_binop_fplus\n"); */
-        /*     break; */
-        /* case ast_binop_fminus: */
-        /*     fprintf(f, "ast_binop_fminus\n"); */
-        /*     break; */
-        /* case ast_binop_ftimes: */
-        /*     fprintf(f, "ast_binop_ftimes\n"); */
-        /*     break; */
-        /* case ast_binop_fdiv: */
-        /*     fprintf(f, "ast_binop_fdiv\n"); */
-        /*     break; */
+            return type_int();
+
+        case ast_binop_fplus:
+        case ast_binop_fminus:
+        case ast_binop_ftimes:
+        case ast_binop_fdiv:
+            if ( expr1->kind != TYPE_float ) error("Type mismatch in the left argument\n");
+            if ( expr2->kind != TYPE_float ) error("Type mismatch in the right argument\n");
+            return type_float();
+
         /* case ast_binop_mod: */
         /*     fprintf(f, "ast_binop_mod\n"); */
         /*     break; */
         /* case ast_binop_exp: */
         /*     fprintf(f, "ast_binop_exp\n"); */
         /*     break; */
-        /* case ast_binop_eq: */
-        /*     fprintf(f, "ast_binop_eq\n"); */
-        /*     break; */
-        /* case ast_binop_ne: */
-        /*     fprintf(f, "ast_binop_ne\n"); */
-        /*     break; */
-        /* case ast_binop_lt: */
-        /*     fprintf(f, "ast_binop_lt\n"); */
-        /*     break; */
-        /* case ast_binop_gt: */
-        /*     fprintf(f, "ast_binop_gt\n"); */
-        /*     break; */
+
+        case ast_binop_eq:
+        case ast_binop_ne:
+        case ast_binop_lt:
+        case ast_binop_gt:
+            if ( expr1->kind != expr2->kind )
+                error("Type mismatch: Arguments must be of the same type\n");
+            if ( expr1->kind != TYPE_char && expr1->kind != TYPE_float && expr1->kind != TYPE_int )
+                error("Type mismatch: Arguments must be of type char, float or int\n");
+            return expr1;
+
         /* case ast_binop_le: */
         /*     fprintf(f, "ast_binop_le\n"); */
         /*     break; */
@@ -536,12 +498,13 @@ void AST_binop_traverse (Type expr1, AST_binop op, Type expr2) {
         /* case ast_binop_phne: */
         /*     fprintf(f, "ast_binop_phne\n"); */
         /*     break; */
-        /* case ast_binop_and: */
-        /*     fprintf(f, "ast_binop_and\n"); */
-        /*     break; */
-        /* case ast_binop_or: */
-        /*     fprintf(f, "ast_binop_or\n"); */
-        /*     break; */
+
+        case ast_binop_and:
+        case ast_binop_or:
+            if ( expr1->kind != TYPE_bool ) error("Type mismatch in the left argument\n");
+            if ( expr2->kind != TYPE_bool ) error("Type mismatch in the right argument\n");
+            return type_bool();
+
         /* case ast_binop_semicolon: */
         /*     fprintf(f, "ast_binop_semicolon\n"); */
         /*     break; */
@@ -551,6 +514,8 @@ void AST_binop_traverse (Type expr1, AST_binop op, Type expr2) {
         default:
             internal("invalid AST");
     }
+
+    return NULL;
 }
 
 void AST_ltdef_list_traverse (AST_ltdef_list l)
