@@ -179,8 +179,8 @@ definition: "id" parameter_list '=' expr 		{ $$ = ast_def_normal($1, $2, NULL, $
           | "id" parameter_list ':' type '=' expr 	{ $$ = ast_def_normal($1, $2, $4, $6); }
           | "mutable" "id" 				{ $$ = ast_def_mutable($2, NULL, NULL); }
           | "mutable" "id" ':' type 			{ $$ = ast_def_mutable($2, NULL, $4); }
-          | "mutable" "id" "[" multi_expr "]" 		{ $$ = ast_def_mutable($2, $4, NULL); }
-          | "mutable" "id" "[" multi_expr "]" ':' type 	{ $$ = ast_def_mutable($2, $4, $7); }
+          | "mutable" "id" '[' multi_expr ']' 		{ $$ = ast_def_mutable($2, $4, NULL); }
+          | "mutable" "id" '[' multi_expr ']' ':' type 	{ $$ = ast_def_mutable($2, $4, $7); }
 ;
 
 parameter_list: 
@@ -279,7 +279,7 @@ expr_high: '!' expr_high		{ $$ = ast_expr_unop (ast_unop_exclam, $2); }
          | "true" 			{ $$ = ast_expr_true(); }
          | "false" 			{ $$ = ast_expr_false(); }
          | "id" 			{ $$ = ast_expr_id($1); }
-         | "id" "[" multi_expr "]" 	{ $$ = ast_expr_arrel ($1, $3); } 
+         | "id" '[' multi_expr ']' 	{ $$ = ast_expr_arrel ($1, $3); } 
          | "constructor" 		{ $$ = ast_expr_Id($1); }
 ;
 
