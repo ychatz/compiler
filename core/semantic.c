@@ -252,7 +252,7 @@ void AST_par_traverse (AST_par p)
 
 Type AST_expr_traverse (AST_expr e) {
     SymbolEntry entry;
-    Type expr1_type, expr2_type, result_type;
+    Type expr1_type, expr2_type, expr3_type, result_type;
     Scope scope;
 
     if (e == NULL) {
@@ -304,35 +304,42 @@ Type AST_expr_traverse (AST_expr e) {
             expr2_type = AST_expr_traverse(e->u.e_binop.expr2);
             return AST_binop_traverse(expr1_type, e->u.e_binop.op, expr2_type);
 
-            /* case EXPR_id: */
-            /*     fprintf(f, "ast_expr: id (\n"); */
-            /*     Identifier_print(f, prec+1, e->u.e_id.id); */
-            /*     indent(f, prec); fprintf(f, ")\n"); */
-            /*     break; */
-            /* case EXPR_Id: */
-            /*     fprintf(f, "ast_expr: Id (\n"); */
-            /*     Identifier_print(f, prec+1, e->u.e_Id.id); */
-            /*     indent(f, prec); fprintf(f, ")\n"); */
-            /*     break; */
-            /* case EXPR_call: */
-            /*     fprintf(f, "ast_expr: call (\n"); */
-            /*     Identifier_print(f, prec+1, e->u.e_call.id); */
-            /*     AST_expr_list_print(f, prec+1, e->u.e_call.list); */
-            /*     indent(f, prec); fprintf(f, ")\n"); */
-            /*     break; */
-            /* case EXPR_Call: */
-            /*     fprintf(f, "ast_expr: Call (\n"); */
-            /*     Identifier_print(f, prec+1, e->u.e_Call.id); */
-            /*     AST_expr_list_print(f, prec+1, e->u.e_Call.list); */
-            /*     indent(f, prec); fprintf(f, ")\n"); */
-            /*     break; */
-            /* case EXPR_arrel: */
-            /*     fprintf(f, "ast_expr: arrel (\n"); */
-            /*     Identifier_print(f, prec+1, e->u.e_arrel.id); */
-            /*     AST_expr_list_print(f, prec+1, e->u.e_arrel.list); */
-            /*     indent(f, prec); fprintf(f, ")\n"); */
-            /*     break; */
-
+/* Paraitoumai :( Den mporo na katalabo ti prepei na kano me afta :(
+        case EXPR_id: 
+            entry = symbol_lookup(symbol_table, e->u.e_id.id, LOOKUP_ALL_SCOPES, 1);
+            if ( entry->entry_type != ENTRY_VARIABLE )
+                error("Type mismatch: Identifier %s is not a variable\n", e->u.e_dim.id);
+            if ( entry->e.variable.type->kind != TYPE_array )
+                error("Type mismatch: %s is not an array\n", e->u.e_dim.id);
+            return type_int();
+            
+            Identifier_print(e->u.e_id.id); 
+            
+            break; 
+        case EXPR_Id: 
+            fprintf(f, "ast_expr: Id (\n"); 
+            Identifier_print(f, prec+1, e->u.e_Id.id); 
+            indent(f, prec); fprintf(f, ")\n"); 
+            break; 
+        case EXPR_call: 
+             
+            Identifier_print(f, prec+1, e->u.e_call.id); 
+            AST_expr_list_traverse(e->u.e_call.list); 
+             
+            break; 
+        case EXPR_Call: 
+             
+            Identifier_print(f, prec+1, e->u.e_Call.id); 
+            AST_expr_list_traverse(e->u.e_Call.list); 
+             
+            break; 
+        case EXPR_arrel: 
+        
+            Identifier_print(f, prec+1, e->u.e_arrel.id); 
+            AST_expr_list_traverse(e->u.e_arrel.list); 
+             
+            break; 
+*/
         case EXPR_dim:
             entry = symbol_lookup(symbol_table, e->u.e_dim.id, LOOKUP_ALL_SCOPES, 1);
             if ( entry->entry_type != ENTRY_VARIABLE )
@@ -358,13 +365,15 @@ Type AST_expr_traverse (AST_expr e) {
             scope_close(symbol_table);
             return result_type;
 
-            /* case EXPR_if: */
-            /*     fprintf(f, "ast_expr: if (\n"); */
-            /*     AST_expr_print(f, prec+1, e->u.e_if.econd); */
-            /*     AST_expr_print(f, prec+1, e->u.e_if.ethen); */
-            /*     AST_expr_print(f, prec+1, e->u.e_if.eelse); */
-            /*     indent(f, prec); fprintf(f, ")\n"); */
-            /*     break; */
+       case EXPR_if: 
+            expr1_type = AST_expr_traverse(e->u.e_if.econd);
+	    if ( expr1_type->kind != TYPE_bool )
+		 error("Type mismatch: Condition is not of type bool\n");
+            expr2_type = AST_expr_traverse(e->u.e_if.ethen); 
+            expr3_type = AST_expr_traverse(e->u.e_if.eelse);       
+            if ( expr2_type->kind != expr3_type->kind )
+                error("Type mismatch: Then and else parts don't match\n");
+            return expr2_type;
 
         case EXPR_while:
             expr1_type = AST_expr_traverse(e->u.e_while.econd);
@@ -372,22 +381,22 @@ Type AST_expr_traverse (AST_expr e) {
                 error("Type mismatch: Condition is not of type bool\n");
             return AST_expr_traverse(e->u.e_while.ebody);
 
-            /* case EXPR_for: */
-            /*     fprintf(f, "ast_expr: for (\n"); */
-            /*     Identifier_print(f, prec+1, e->u.e_for.id); */
-            /*     AST_expr_print(f, prec+1, e->u.e_for.expr1); */
-            /*     indent(f, prec+1); */
-            /*     fprintf(f, "downFlag = %s\n", e->u.e_for.downFlag ? "true" : "false"); */
-            /*     AST_expr_print(f, prec+1, e->u.e_for.expr2); */
-            /*     AST_expr_print(f, prec+1, e->u.e_for.ebody); */
-            /*     indent(f, prec); fprintf(f, ")\n"); */
-            /*     break; */
+        case EXPR_for:  
+/*            Identifier_print(f, prec+1, e->u.e_for.id); */ /* TODO: Ti kanoume ton identifier? Add to symbol table? */
+            expr1_type = AST_expr_traverse(e->u.e_for.expr1);
+            if ( expr1_type->kind != TYPE_int )
+                error("Type mismatch: Start part of 'for' is not of type int\n");             
+            expr2_type = AST_expr_traverse(e->u.e_for.expr2); 
+            if ( expr2_type->kind != TYPE_int )
+                error("Type mismatch: End part of 'for' is not of type int\n");
+            return AST_expr_traverse(e->u.e_for.ebody); 
             /* case EXPR_match: */
             /*     fprintf(f, "ast_expr: match (\n"); */
             /*     AST_expr_print(f, prec+1, e->u.e_match.expr); */
             /*     AST_clause_list_print(f, prec+1, e->u.e_match.list); */
             /*     indent(f, prec); fprintf(f, ")\n"); */
-            /*     break; */
+            /*     break; */             
+            break; 
         default:
             internal("invalid AST");
     }
