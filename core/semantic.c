@@ -45,6 +45,15 @@ Identifier to_hash(AST_expr e) {
         case EXPR_strlit:
             sprintf(temp, "__char_%s", e->u.e_cconst.rep);
             break;
+        case EXPR_true:
+            strcpy(temp, "__true");
+            break;
+        case EXPR_false:
+            strcpy(temp, "__false");
+            break;
+        case EXPR_unit:
+            strcpy(temp, "__unit");
+            break;
         default:
             internal("Can't convert expression tag to hash\n");
     }
@@ -232,33 +241,29 @@ Type AST_expr_traverse (AST_expr e) {
             entry->entry_type = ENTRY_CONSTANT;
             entry->e.constant.type = type_int();
             entry->e.constant.value.v_int = e->u.e_iconst.rep;
-
             return entry->e.constant.type;
-            break;
+
         case EXPR_fconst:
             entry = symbol_enter(symbol_table, to_hash(e), 0);
             entry->entry_type = ENTRY_CONSTANT;
             entry->e.constant.type = type_float();
             entry->e.constant.value.v_float = e->u.e_fconst.rep;
-
             return entry->e.constant.type;
-            break;
+            
         case EXPR_cconst:
             entry = symbol_enter(symbol_table, to_hash(e), 0);
             entry->entry_type = ENTRY_CONSTANT;
             entry->e.constant.type = type_char();
             entry->e.constant.value.v_char = e->u.e_cconst.rep;
-
             return entry->e.constant.type;
-            break;
+
         case EXPR_strlit:
             entry = symbol_enter(symbol_table, to_hash(e), 0);
             entry->entry_type = ENTRY_CONSTANT;
             entry->e.constant.type = type_array(1, type_char());
             entry->e.constant.value.v_strlit = e->u.e_strlit.rep;
-
             return entry->e.constant.type;
-            break;
+
         /* case EXPR_true: */
         /*     fprintf(f, "ast_expr: true\n"); */
         /*     break; */
@@ -277,8 +282,8 @@ Type AST_expr_traverse (AST_expr e) {
         case EXPR_binop:
             expr1_type = AST_expr_traverse(e->u.e_binop.expr1);
             expr2_type = AST_expr_traverse(e->u.e_binop.expr2);
-            AST_binop_traverse(expr1_type, e->u.e_binop.op, expr2_type);
-            break;
+            return AST_binop_traverse(expr1_type, e->u.e_binop.op, expr2_type);
+
         /* case EXPR_id: */
         /*     fprintf(f, "ast_expr: id (\n"); */
         /*     Identifier_print(f, prec+1, e->u.e_id.id); */
@@ -457,62 +462,64 @@ Type AST_binop_traverse (Type expr1, AST_binop op, Type expr2) {
         case ast_binop_minus:
         case ast_binop_times:
         case ast_binop_div:
-            if ( expr1->kind != TYPE_int ) error("Type mismatch in the left argument\n");
-            if ( expr2->kind != TYPE_int ) error("Type mismatch in the right argument\n");
+        case ast_binop_mod:
+            if ( expr1->kind != TYPE_int )
+                error("Type mismatch in the left argument\n");
+            if ( expr2->kind != TYPE_int )
+                error("Type mismatch in the right argument\n");
             return type_int();
 
         case ast_binop_fplus:
         case ast_binop_fminus:
         case ast_binop_ftimes:
         case ast_binop_fdiv:
-            if ( expr1->kind != TYPE_float ) error("Type mismatch in the left argument\n");
-            if ( expr2->kind != TYPE_float ) error("Type mismatch in the right argument\n");
+        case ast_binop_exp:
+            if ( expr1->kind != TYPE_float )
+                error("Type mismatch in the left argument\n");
+            if ( expr2->kind != TYPE_float )
+                error("Type mismatch in the right argument\n");
             return type_float();
 
-        /* case ast_binop_mod: */
-        /*     fprintf(f, "ast_binop_mod\n"); */
-        /*     break; */
-        /* case ast_binop_exp: */
-        /*     fprintf(f, "ast_binop_exp\n"); */
-        /*     break; */
-
-        case ast_binop_eq:
-        case ast_binop_ne:
         case ast_binop_lt:
         case ast_binop_gt:
+        case ast_binop_le:
+        case ast_binop_ge:
             if ( expr1->kind != expr2->kind )
                 error("Type mismatch: Arguments must be of the same type\n");
             if ( expr1->kind != TYPE_char && expr1->kind != TYPE_float && expr1->kind != TYPE_int )
-                error("Type mismatch: Left argument must be of type char, float or int\n");
-            if ( expr2->kind != TYPE_char && expr2->kind != TYPE_float && expr2->kind != TYPE_int )
-                error("Type mismatch: Right argument must be of type char, float or int\n");
-            return expr1;
+                error("Type mismatch: Arguments must be of type char, float or int\n");
+            return type_bool();
 
-        /* case ast_binop_le: */
-        /*     fprintf(f, "ast_binop_le\n"); */
-        /*     break; */
-        /* case ast_binop_ge: */
-        /*     fprintf(f, "ast_binop_ge\n"); */
-        /*     break; */
-        /* case ast_binop_pheq: */
-        /*     fprintf(f, "ast_binop_pheq\n"); */
-        /*     break; */
-        /* case ast_binop_phne: */
-        /*     fprintf(f, "ast_binop_phne\n"); */
-        /*     break; */
+        case ast_binop_eq:
+        case ast_binop_ne:
+        case ast_binop_pheq:
+        case ast_binop_phne:
+            if ( expr1->kind != expr2->kind )
+                error("Type mismatch: Arguments must be of the same type\n");
+            if ( expr1->kind == TYPE_array )
+                error("Type mismatch: Arguments can't be of type array\n");
+            if ( expr1->kind == TYPE_func )
+                error("Type mismatch: Arguments can't be of type function\n");
+            return type_bool();
 
         case ast_binop_and:
         case ast_binop_or:
-            if ( expr1->kind != TYPE_bool ) error("Type mismatch in the left argument\n");
-            if ( expr2->kind != TYPE_bool ) error("Type mismatch in the right argument\n");
+            if ( expr1->kind != TYPE_bool )
+                error("Type mismatch in the left argument\n");
+            if ( expr2->kind != TYPE_bool )
+                error("Type mismatch in the right argument\n");
             return type_bool();
 
-        /* case ast_binop_semicolon: */
-        /*     fprintf(f, "ast_binop_semicolon\n"); */
-        /*     break; */
-        /* case ast_binop_assign: */
-        /*     fprintf(f, "ast_binop_assign\n"); */
-        /*     break; */
+        case ast_binop_semicolon:
+            return expr2;
+
+        case ast_binop_assign:
+            if ( expr1->kind != TYPE_ref ) 
+                error("Type mismatch: First argument must be of type ref\n");
+            else if ( expr1->u.t_ref.type->kind != expr2->kind )
+                error("Type mismatch: First argument must be of type ref\n"); /* TODO: fix this message */
+            return type_unit();
+
         default:
             internal("invalid AST");
     }
