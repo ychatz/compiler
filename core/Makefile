@@ -65,7 +65,7 @@ symbol.o   : symbol.c symbol.h general.h error.h types.h
 types.o    : types.c types.h general.h error.h
 ast.o      : ast.c ast.h general.h types.h
 pretty.o   : pretty.c pretty.h general.h types.h ast.h
-semantic.o : semantic.c semantic.h ast.h error.h symbol.h
+semantic.o : semantic.c semantic.h ast.h error.h symbol.h general.h
 main.o     : main.c llama.h parser.h ast.h semantic.h
 
 clean:

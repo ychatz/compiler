@@ -124,11 +124,6 @@ static HashType PJW_hash (const char * key)
    --------------------------- Αναγνωριστικά ---------------------------
    --------------------------------------------------------------------- */
 
-struct Identifier_tag {
-   char * name;
-   Identifier next;
-};
-
 static Identifier id_make_new (const char * name, Identifier next)
 {
    Identifier result = new (sizeof (struct Identifier_tag));

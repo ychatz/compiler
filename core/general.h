@@ -75,6 +75,11 @@ extern int linecount;
 
 typedef struct Identifier_tag * Identifier;
 
+struct Identifier_tag {
+   char * name;
+   Identifier next;
+};
+
 Identifier id_make (const char *);
 const char * id_name (Identifier);
 

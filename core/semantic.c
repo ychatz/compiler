@@ -22,6 +22,7 @@
    --------------------------------------------------------------------- */
 
 #include <string.h>
+#include "general.h"
 #include "error.h"
 #include "ast.h"
 #include "semantic.h"
@@ -58,6 +59,13 @@ Identifier to_hash(AST_expr e) {
             internal("Can't convert expression tag to hash\n");
     }
 
+    return id_make(temp);
+}
+
+Identifier hash_type_id(Identifier id) {
+    char temp[4000]; /* TODO: Fix this */
+
+    sprintf(temp, "__char_%s", id->name);
     return id_make(temp);
 }
 
@@ -150,18 +158,13 @@ Scope AST_letdef_traverse (AST_letdef ld)
 
     return scope;
 }
-/*  */
-/* void AST_typedef_print (FILE * f, int prec, AST_typedef td) */
-/* { */
-/*    indent(f, prec); */
-/*    if (td == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "ast_typedef (\n"); */
-/*    AST_tdef_list_print(f, prec+1, td->list); */
-/*    indent(f, prec); fprintf(f, ")\n"); */
-/* } */
+
+void AST_typedef_traverse(AST_typedef td) {
+   if (td == NULL) {
+      return;
+   }
+   AST_tdef_list_traverse(td->list);
+}
 
 void AST_def_traverse (AST_def d)
 {
@@ -194,44 +197,51 @@ void AST_def_traverse (AST_def d)
     }
 }
 
-/* void AST_tdef_print (FILE * f, int prec, AST_tdef td) */
-/* { */
-/*    indent(f, prec); */
-/*    if (td == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "ast_tdef (\n"); */
-/*    Identifier_print(f, prec+1, td->id); */
-/*    AST_constr_list_print(f, prec+1, td->list); */
-/*    indent(f, prec); fprintf(f, ")\n"); */
-/* } */
-/*  */
-/* void AST_constr_print (FILE * f, int prec, AST_constr c) */
-/* { */
-/*    indent(f, prec); */
-/*    if (c == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "ast_constr (\n"); */
-/*    Identifier_print(f, prec+1, c->id); */
-/*    Type_list_print(f, prec+1, c->list); */
-/*    indent(f, prec); fprintf(f, ")\n"); */
-/* } */
+void AST_tdef_traverse(AST_tdef td) {
+    SymbolEntry entry;
+
+    if (td == NULL) {
+        return;
+    }
+    /* TODO: ap'oti fainetai, epitrepetai to
+     * let x = 2
+     * type x = 3
+     * let mutable y : x
+     *
+     * theloume na exoume kati san diaforetiko symbol table gia typous
+     * kai diaforetiko gia sinartiseis? pros to paron vazoume to prefix __type_
+     * otan vazoume typous sto symbol table
+     */
+    entry = symbol_enter(symbol_table, hash_type_id(td->id), 0);
+    entry->entry_type = ENTRY_TYPE;
+    entry->e.type.type = type_id(td->id);
+    AST_constr_list_traverse(td->list);
+}
+
+void AST_constr_traverse(AST_constr c) {
+    SymbolEntry entry;
+
+    if (c == NULL) {
+        return;
+    }
+
+    entry = symbol_enter(symbol_table, c->id, 0);
+    entry->entry_type = ENTRY_CONSTRUCTOR;
+    Type_list_traverse(c->list);
+}
 
 void AST_par_traverse (AST_par p)
 {
-   SymbolEntry entry;
+    SymbolEntry entry;
 
-   if (p == NULL) {
-      /* fprintf(f, "<<NULL>>\n"); */
-      return;
-   }
+    if (p == NULL) {
+        /* fprintf(f, "<<NULL>>\n"); */
+        return;
+    }
 
-   entry = symbol_enter(symbol_table, p->id, 1);
-   entry->entry_type = ENTRY_PARAMETER;
-   entry->e.parameter.type = p->type;
+    entry = symbol_enter(symbol_table, p->id, 1);
+    entry->entry_type = ENTRY_PARAMETER;
+    entry->e.parameter.type = p->type;
 }
 
 Type AST_expr_traverse (AST_expr e) {
@@ -257,7 +267,7 @@ Type AST_expr_traverse (AST_expr e) {
             entry->e.constant.type = type_float();
             entry->e.constant.value.v_float = e->u.e_fconst.rep;
             return entry->e.constant.type;
-            
+
         case EXPR_cconst:
             entry = symbol_enter(symbol_table, to_hash(e), 0);
             entry->entry_type = ENTRY_CONSTANT;
@@ -288,53 +298,53 @@ Type AST_expr_traverse (AST_expr e) {
             expr2_type = AST_expr_traverse(e->u.e_binop.expr2);
             return AST_binop_traverse(expr1_type, e->u.e_binop.op, expr2_type);
 
-        /* case EXPR_id: */
-        /*     fprintf(f, "ast_expr: id (\n"); */
-        /*     Identifier_print(f, prec+1, e->u.e_id.id); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
-        /* case EXPR_Id: */
-        /*     fprintf(f, "ast_expr: Id (\n"); */
-        /*     Identifier_print(f, prec+1, e->u.e_Id.id); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
-        /* case EXPR_call: */
-        /*     fprintf(f, "ast_expr: call (\n"); */
-        /*     Identifier_print(f, prec+1, e->u.e_call.id); */
-        /*     AST_expr_list_print(f, prec+1, e->u.e_call.list); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
-        /* case EXPR_Call: */
-        /*     fprintf(f, "ast_expr: Call (\n"); */
-        /*     Identifier_print(f, prec+1, e->u.e_Call.id); */
-        /*     AST_expr_list_print(f, prec+1, e->u.e_Call.list); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
-        /* case EXPR_arrel: */
-        /*     fprintf(f, "ast_expr: arrel (\n"); */
-        /*     Identifier_print(f, prec+1, e->u.e_arrel.id); */
-        /*     AST_expr_list_print(f, prec+1, e->u.e_arrel.list); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
+            /* case EXPR_id: */
+            /*     fprintf(f, "ast_expr: id (\n"); */
+            /*     Identifier_print(f, prec+1, e->u.e_id.id); */
+            /*     indent(f, prec); fprintf(f, ")\n"); */
+            /*     break; */
+            /* case EXPR_Id: */
+            /*     fprintf(f, "ast_expr: Id (\n"); */
+            /*     Identifier_print(f, prec+1, e->u.e_Id.id); */
+            /*     indent(f, prec); fprintf(f, ")\n"); */
+            /*     break; */
+            /* case EXPR_call: */
+            /*     fprintf(f, "ast_expr: call (\n"); */
+            /*     Identifier_print(f, prec+1, e->u.e_call.id); */
+            /*     AST_expr_list_print(f, prec+1, e->u.e_call.list); */
+            /*     indent(f, prec); fprintf(f, ")\n"); */
+            /*     break; */
+            /* case EXPR_Call: */
+            /*     fprintf(f, "ast_expr: Call (\n"); */
+            /*     Identifier_print(f, prec+1, e->u.e_Call.id); */
+            /*     AST_expr_list_print(f, prec+1, e->u.e_Call.list); */
+            /*     indent(f, prec); fprintf(f, ")\n"); */
+            /*     break; */
+            /* case EXPR_arrel: */
+            /*     fprintf(f, "ast_expr: arrel (\n"); */
+            /*     Identifier_print(f, prec+1, e->u.e_arrel.id); */
+            /*     AST_expr_list_print(f, prec+1, e->u.e_arrel.list); */
+            /*     indent(f, prec); fprintf(f, ")\n"); */
+            /*     break; */
 
         case EXPR_dim:
             entry = symbol_lookup(symbol_table, e->u.e_dim.id, LOOKUP_ALL_SCOPES, 1);
             if ( entry->entry_type != ENTRY_VARIABLE )
-                error("Identifier %s is not a variable\n", e->u.e_dim.id);
+                error("Type mismatch: Identifier %s is not a variable\n", e->u.e_dim.id);
             if ( entry->e.variable.type->kind != TYPE_array )
-                error("%s is not an array\n", e->u.e_dim.id);
+                error("Type mismatch: %s is not an array\n", e->u.e_dim.id);
             return type_int();
 
-        /* case EXPR_new: */
-        /*     fprintf(f, "ast_expr: new (\n"); */
-        /*     Type_print(f, prec+1, e->u.e_new.type); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
-        /* case EXPR_delete: */
-        /*     fprintf(f, "ast_expr: delete (\n"); */
-        /*     AST_expr_print(f, prec+1, e->u.e_delete.expr); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
+        case EXPR_new:
+            if ( e->u.e_new.type->kind == TYPE_array )
+                error("Typ mismatch: New variable can't be of array type\n");
+            return type_ref(e->u.e_new.type);
+
+        case EXPR_delete:
+            result_type = AST_expr_traverse(e->u.e_delete.expr);
+            if ( result_type->kind != TYPE_ref )
+                error("Type mismatch: Expression is not of type ref\n");
+            return type_unit();
 
         case EXPR_let:
             scope = AST_letdef_traverse(e->u.e_let.def);
@@ -342,35 +352,36 @@ Type AST_expr_traverse (AST_expr e) {
             scope_close(symbol_table);
             return result_type;
 
-        /* case EXPR_if: */
-        /*     fprintf(f, "ast_expr: if (\n"); */
-        /*     AST_expr_print(f, prec+1, e->u.e_if.econd); */
-        /*     AST_expr_print(f, prec+1, e->u.e_if.ethen); */
-        /*     AST_expr_print(f, prec+1, e->u.e_if.eelse); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
-        /* case EXPR_while: */
-        /*     fprintf(f, "ast_expr: while (\n"); */
-        /*     AST_expr_print(f, prec+1, e->u.e_while.econd); */
-        /*     AST_expr_print(f, prec+1, e->u.e_while.ebody); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
-        /* case EXPR_for: */
-        /*     fprintf(f, "ast_expr: for (\n"); */
-        /*     Identifier_print(f, prec+1, e->u.e_for.id); */
-        /*     AST_expr_print(f, prec+1, e->u.e_for.expr1); */
-        /*     indent(f, prec+1); */
-        /*     fprintf(f, "downFlag = %s\n", e->u.e_for.downFlag ? "true" : "false"); */
-        /*     AST_expr_print(f, prec+1, e->u.e_for.expr2); */
-        /*     AST_expr_print(f, prec+1, e->u.e_for.ebody); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
-        /* case EXPR_match: */
-        /*     fprintf(f, "ast_expr: match (\n"); */
-        /*     AST_expr_print(f, prec+1, e->u.e_match.expr); */
-        /*     AST_clause_list_print(f, prec+1, e->u.e_match.list); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
+            /* case EXPR_if: */
+            /*     fprintf(f, "ast_expr: if (\n"); */
+            /*     AST_expr_print(f, prec+1, e->u.e_if.econd); */
+            /*     AST_expr_print(f, prec+1, e->u.e_if.ethen); */
+            /*     AST_expr_print(f, prec+1, e->u.e_if.eelse); */
+            /*     indent(f, prec); fprintf(f, ")\n"); */
+            /*     break; */
+
+        case EXPR_while:
+            expr1_type = AST_expr_traverse(e->u.e_while.econd);
+            if ( expr1_type->kind != TYPE_bool )
+                error("Type mismatch: Condition is not of type bool\n");
+            return AST_expr_traverse(e->u.e_while.ebody);
+
+            /* case EXPR_for: */
+            /*     fprintf(f, "ast_expr: for (\n"); */
+            /*     Identifier_print(f, prec+1, e->u.e_for.id); */
+            /*     AST_expr_print(f, prec+1, e->u.e_for.expr1); */
+            /*     indent(f, prec+1); */
+            /*     fprintf(f, "downFlag = %s\n", e->u.e_for.downFlag ? "true" : "false"); */
+            /*     AST_expr_print(f, prec+1, e->u.e_for.expr2); */
+            /*     AST_expr_print(f, prec+1, e->u.e_for.ebody); */
+            /*     indent(f, prec); fprintf(f, ")\n"); */
+            /*     break; */
+            /* case EXPR_match: */
+            /*     fprintf(f, "ast_expr: match (\n"); */
+            /*     AST_expr_print(f, prec+1, e->u.e_match.expr); */
+            /*     AST_clause_list_print(f, prec+1, e->u.e_match.list); */
+            /*     indent(f, prec); fprintf(f, ")\n"); */
+            /*     break; */
         default:
             internal("invalid AST");
     }
@@ -544,19 +555,19 @@ void AST_ltdef_list_traverse (AST_ltdef_list l)
         /* fprintf(f, "<<NULL>>\n"); */
         return;
     }
-    switch (l->kind) {
+    switch (l->kind) { /* TODO: xreiazetai ontws na anoiksoume scope edw? (MALLON OXI) */
         case LTDEF_let:
             scope_open(symbol_table);
             AST_letdef_traverse(l->head.letdef);
             AST_ltdef_list_traverse(l->tail);
             scope_close(symbol_table);
             break;
-            /* case LTDEF_type: */
-            /*     scope_open(symbol_table); */
-            /*     AST_typedef_traverse(l->head.typdef); */
-            /*     AST_ltdef_list_traverse(l->tail); */
-            /*     scope_close(symbol_table); */
-            /*     break; */
+        case LTDEF_type:
+            scope_open(symbol_table);
+            AST_typedef_traverse(l->head.typdef);
+            AST_ltdef_list_traverse(l->tail);
+            scope_close(symbol_table);
+            break;
         default:
             internal("invalid AST");
     }
@@ -572,31 +583,23 @@ void AST_def_list_traverse (AST_def_list l)
     AST_def_list_traverse(l->tail);
 }
 
-/* void AST_tdef_list_print (FILE * f, int prec, AST_tdef_list l) */
-/* { */
-/*    indent(f, prec); */
-/*    if (l == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "ast_tdef_list (\n"); */
-/*    AST_tdef_print(f, prec+1, l->head); */
-/*    AST_tdef_list_print(f, prec+1, l->tail); */
-/*    indent(f, prec); fprintf(f, ")\n"); */
-/* } */
-/*  */
-/* void AST_constr_list_print (FILE * f, int prec, AST_constr_list l) */
-/* { */
-/*    indent(f, prec); */
-/*    if (l == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "ast_constr_list (\n"); */
-/*    AST_constr_print(f, prec+1, l->head); */
-/*    AST_constr_list_print(f, prec+1, l->tail); */
-/*    indent(f, prec); fprintf(f, ")\n"); */
-/* } */
+void AST_tdef_list_traverse(AST_tdef_list l)
+{
+    if (l == NULL) {
+        return;
+    }
+    AST_tdef_traverse(l->head);
+    AST_tdef_list_traverse(l->tail);
+}
+
+void AST_constr_list_traverse(AST_constr_list l)
+{
+   if (l == NULL) {
+      return;
+   }
+   AST_constr_traverse(l->head);
+   AST_constr_list_traverse(l->tail);
+}
 
 void AST_par_list_traverse (AST_par_list l)
 {
@@ -647,16 +650,19 @@ void AST_par_list_traverse (AST_par_list l)
 /*    indent(f, prec); fprintf(f, ")\n"); */
 /* } */
 /*  */
-/* void Type_list_print (FILE * f, int prec, Type_list l) */
-/* { */
-/*    indent(f, prec); */
-/*    if (l == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "ast_type_list (\n"); */
-/*    Type_print(f, prec+1, l->head); */
-/*    Type_list_print(f, prec+1, l->tail); */
-/*    indent(f, prec); fprintf(f, ")\n"); */
-/* } */
-/*  */
+void Type_list_traverse(Type_list l) {
+    if (l == NULL) {
+        return;
+    }
+
+    /* TODO: mipws den epitrepontai kapoioi typoi? (p.x. ref) */
+    switch(l->head->kind) {
+        case TYPE_id:
+            symbol_lookup(symbol_table, l->head->u.t_id.id, LOOKUP_ALL_SCOPES, 1);
+            break;
+
+        default:
+            break;
+    }
+    Type_list_traverse(l->tail);
+}
