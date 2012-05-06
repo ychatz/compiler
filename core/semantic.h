@@ -45,7 +45,7 @@ Type AST_expr_traverse            (AST_expr);
 /* void AST_clause_traverse          (AST_clause); */
 /* void AST_pattern_traverse         (AST_pattern); */
 /*  */
-/* void AST_unop_traverse            (AST_unop); */
+Type AST_unop_traverse            (AST_unop, Type);
 Type AST_binop_traverse           (Type, AST_binop, Type);
 
 void AST_ltdef_list_traverse   (AST_ltdef_list);

@@ -264,21 +264,17 @@ Type AST_expr_traverse (AST_expr e) {
             entry->e.constant.value.v_strlit = e->u.e_strlit.rep;
             return entry->e.constant.type;
 
-        /* case EXPR_true: */
-        /*     fprintf(f, "ast_expr: true\n"); */
-        /*     break; */
-        /* case EXPR_false: */
-        /*     fprintf(f, "ast_expr: false\n"); */
-        /*     break; */
-        /* case EXPR_unit: */
-        /*     fprintf(f, "ast_expr: unit\n"); */
-        /*     break; */
-        /* case EXPR_unop: */
-        /*     fprintf(f, "ast_expr: unop (\n"); */
-        /*     AST_unop_print(f, prec+1, e->u.e_unop.op); */
-        /*     AST_expr_print(f, prec+1, e->u.e_unop.expr); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
+        case EXPR_true:
+        case EXPR_false:
+            return type_bool();
+
+        case EXPR_unit:
+            return type_unit();
+
+        case EXPR_unop:
+            expr1_type = AST_expr_traverse(e->u.e_unop.expr);
+            return AST_unop_traverse(e->u.e_unop.op, expr1_type);
+
         case EXPR_binop:
             expr1_type = AST_expr_traverse(e->u.e_binop.expr1);
             expr2_type = AST_expr_traverse(e->u.e_binop.expr2);
@@ -428,35 +424,39 @@ Type AST_expr_traverse (AST_expr e) {
 /*          internal("invalid AST"); */
 /*    } */
 /* } */
-/*  */
-/* void AST_unop_print (FILE * f, int prec, AST_unop op) */
-/* { */
-/*    indent(f, prec); */
-/*    switch (op) { */
-/*       case ast_unop_plus: */
-/*          fprintf(f, "ast_unop_plus\n"); */
-/*          break; */
-/*       case ast_unop_minus: */
-/*          fprintf(f, "ast_unop_minus\n"); */
-/*          break; */
-/*       case ast_unop_fplus: */
-/*          fprintf(f, "ast_unop_fplus\n"); */
-/*          break; */
-/*       case ast_unop_fminus: */
-/*          fprintf(f, "ast_unop_fminus\n"); */
-/*          break; */
-/*       case ast_unop_exclam: */
-/*          fprintf(f, "ast_unop_exclam\n"); */
-/*          break; */
-/*       case ast_unop_not: */
-/*          fprintf(f, "ast_unop_not\n"); */
-/*          break; */
-/*       default: */
-/*          internal("invalid AST"); */
-/*    } */
-/* } */
 
-Type AST_binop_traverse (Type expr1, AST_binop op, Type expr2) {
+Type AST_unop_traverse(AST_unop op, Type expr) {
+    switch (op) {
+        case ast_unop_plus:
+        case ast_unop_minus:
+            if ( expr->kind != TYPE_int )
+                error("Type mismatch: Argument is not of type int\n");
+            return type_int();
+
+        case ast_unop_fplus:
+        case ast_unop_fminus:
+            if ( expr->kind != TYPE_float )
+                error("Type mismatch: Argument is not of type float\n");
+            return type_float();
+
+        case ast_unop_exclam:
+            if ( expr->kind != TYPE_ref )
+                error("Type mismatch: Argument is not of type ref\n");
+            return expr->u.t_ref.type;
+
+        case ast_unop_not:
+            if ( expr->kind != TYPE_bool )
+                error("Type mismatch: Argument is not of type bool\n");
+            return type_bool();
+
+        default:
+            internal("invalid AST");
+    }
+
+    return NULL;
+}
+
+Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
     switch (op) {
         case ast_binop_plus:
         case ast_binop_minus:
