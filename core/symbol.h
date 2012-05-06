@@ -72,7 +72,8 @@ struct SymbolEntry_tag {
    enum {
        ENTRY_CONSTANT,
        ENTRY_FUNCTION,
-       ENTRY_PARAMETER
+       ENTRY_PARAMETER,
+       ENTRY_VARIABLE
    } entry_type;
 
    union {
@@ -95,6 +96,10 @@ struct SymbolEntry_tag {
       struct {
          Type type;
       } parameter;
+
+      struct {
+         Type type;
+      } variable;
    } e;
 };
 

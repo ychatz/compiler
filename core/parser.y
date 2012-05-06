@@ -158,34 +158,34 @@ AST_program ast;
 %%
 
 program:
-      definition_list                       { ast = ast_program($1); }
+      definition_list                                   { ast = ast_program($1); }
 ;
 
 definition_list:
-	   /* nothing */                        { $$ = NULL;  }
-       | let_definition definition_list 	{ $$ = ast_ltdef_list_let($1, $2); }
-       | type_definition definition_list 	{ $$ = ast_ltdef_list_type($1, $2); }
+               /* nothing */                            { $$ = NULL;  }
+               | let_definition definition_list         { $$ = ast_ltdef_list_let($1, $2); }
+               | type_definition definition_list        { $$ = ast_ltdef_list_type($1, $2); }
 ;
 
-let_definition: "let" many_definitions 		{ $$ = ast_letdef(false, $2); }
-              | "let" "rec" many_definitions 	{ $$ = ast_letdef(true, $3); }
+let_definition: "let" many_definitions                  { $$ = ast_letdef(false, $2); }
+              | "let" "rec" many_definitions            { $$ = ast_letdef(true, $3); }
 ;
 
-many_definitions: definition 				{ $$ = ast_def_list ($1, NULL); } 
+many_definitions: definition                            { $$ = ast_def_list ($1, NULL); } 
                 | definition "and" many_definitions 	{ $$ = ast_def_list($1, $3); }
 ; 
 
-definition: "id" parameter_list '=' expr 		{ $$ = ast_def_normal($1, $2, NULL, $4); }
-          | "id" parameter_list ':' type '=' expr 	{ $$ = ast_def_normal($1, $2, $4, $6); }
-          | "mutable" "id" 				{ $$ = ast_def_mutable($2, NULL, NULL); }
-          | "mutable" "id" ':' type 			{ $$ = ast_def_mutable($2, NULL, $4); }
-          | "mutable" "id" '[' multi_expr ']' 		{ $$ = ast_def_mutable($2, $4, NULL); }
+definition: "id" parameter_list '=' expr                { $$ = ast_def_normal($1, $2, NULL, $4); }
+          | "id" parameter_list ':' type '=' expr       { $$ = ast_def_normal($1, $2, $4, $6); }
+          | "mutable" "id"                              { $$ = ast_def_mutable($2, NULL, NULL); }
+          | "mutable" "id" ':' type                     { $$ = ast_def_mutable($2, NULL, $4); }
+          | "mutable" "id" '[' multi_expr ']'           { $$ = ast_def_mutable($2, $4, NULL); }
           | "mutable" "id" '[' multi_expr ']' ':' type 	{ $$ = ast_def_mutable($2, $4, $7); }
 ;
 
 parameter_list: 
-		/* nothing */			{ $$ = NULL; }
-              | parameter parameter_list 	{ $$ = ast_par_list($1, $2); }
+              /* nothing */                 { $$ = NULL; }
+              | parameter parameter_list    { $$ = ast_par_list($1, $2); }
 ;
 
 parameter: "id" 			{ $$ = ast_par($1, NULL); }

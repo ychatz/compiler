@@ -124,23 +124,31 @@ void AST_program_traverse (AST_program p)
     }
     symbol_table = symbol_make(193); /* TODO: find a better size */
     scope_open(symbol_table);
+    /* TODO: insert run-time library functions to symbol table here */
     AST_ltdef_list_traverse(p->list);
     scope_close(symbol_table);
 }
 
-void AST_letdef_traverse (AST_letdef ld)
+Scope AST_letdef_traverse (AST_letdef ld)
 {
+    Scope scope;
     if (ld == NULL) {
-        /* fprintf(f, "<<NULL>>\n"); */
-        return;
+        return NULL;
     }
-    if ( ld->recFlag ) {
-        /* ... */
+
+    scope = scope_open(symbol_table);
+
+    if ( ld->recFlag == false ) {
+        scope_hide(scope, true);
     }
-    else {
-        /* ... */
-    }
+
     AST_def_list_traverse(ld->list);
+
+    if ( ld->recFlag == false ) {
+        scope_hide(scope, false);
+    }
+
+    return scope;
 }
 /*  */
 /* void AST_typedef_print (FILE * f, int prec, AST_typedef td) */
@@ -175,13 +183,12 @@ void AST_def_traverse (AST_def d)
 
             scope_close(symbol_table);
             break;
-            /* case DEF_mutable: */
-            /*    fprintf(f, "ast_def: mutable (\n"); */
-            /*    Identifier_print(f, prec+1, d->u.d_mutable.id); */
-            /*    AST_expr_list_print(f, prec+1, d->u.d_mutable.list); */
-            /*    Type_print(f, prec+1, d->u.d_mutable.type); */
-            /*    indent(f, prec); fprintf(f, ")\n"); */
-            /*    break; */
+        case DEF_mutable:
+            entry = symbol_enter(symbol_table, d->u.d_mutable.id, 0);
+            entry->entry_type = ENTRY_VARIABLE;
+            entry->e.variable.type = d->u.d_mutable.type;
+            /* TODO: uncomment this AST_expr_list_print(f, prec+1, d->u.d_mutable.list); */
+            break;
         default:
             internal("invalid AST");
     }
@@ -229,7 +236,8 @@ void AST_par_traverse (AST_par p)
 
 Type AST_expr_traverse (AST_expr e) {
     SymbolEntry entry;
-    Type expr1_type, expr2_type;
+    Type expr1_type, expr2_type, result_type;
+    Scope scope;
 
     if (e == NULL) {
         /* fprintf(f, "<<NULL>>\n"); */
@@ -266,7 +274,7 @@ Type AST_expr_traverse (AST_expr e) {
 
         case EXPR_true:
         case EXPR_false:
-            return type_bool();
+            return type_bool(); /* TODO: add this to symbol table maybe? */
 
         case EXPR_unit:
             return type_unit();
@@ -308,13 +316,15 @@ Type AST_expr_traverse (AST_expr e) {
         /*     AST_expr_list_print(f, prec+1, e->u.e_arrel.list); */
         /*     indent(f, prec); fprintf(f, ")\n"); */
         /*     break; */
-        /* case EXPR_dim: */
-        /*     fprintf(f, "ast_expr: dim (\n"); */
-        /*     indent(f, prec+1); */
-        /*     fprintf(f, "dim = %d\n", e->u.e_dim.dim); */
-        /*     Identifier_print(f, prec+1, e->u.e_dim.id); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
+
+        case EXPR_dim:
+            entry = symbol_lookup(symbol_table, e->u.e_dim.id, LOOKUP_ALL_SCOPES, 1);
+            if ( entry->entry_type != ENTRY_VARIABLE )
+                error("Identifier %s is not a variable\n", e->u.e_dim.id);
+            if ( entry->e.variable.type->kind != TYPE_array )
+                error("%s is not an array\n", e->u.e_dim.id);
+            return type_int();
+
         /* case EXPR_new: */
         /*     fprintf(f, "ast_expr: new (\n"); */
         /*     Type_print(f, prec+1, e->u.e_new.type); */
@@ -325,12 +335,13 @@ Type AST_expr_traverse (AST_expr e) {
         /*     AST_expr_print(f, prec+1, e->u.e_delete.expr); */
         /*     indent(f, prec); fprintf(f, ")\n"); */
         /*     break; */
-        /* case EXPR_let: */
-        /*     fprintf(f, "ast_expr: let (\n"); */
-        /*     AST_letdef_print(f, prec+1, e->u.e_let.def); */
-        /*     AST_expr_print(f, prec+1, e->u.e_let.expr); */
-        /*     indent(f, prec); fprintf(f, ")\n"); */
-        /*     break; */
+
+        case EXPR_let:
+            scope = AST_letdef_traverse(e->u.e_let.def);
+            result_type = AST_expr_traverse(e->u.e_let.expr);
+            scope_close(symbol_table);
+            return result_type;
+
         /* case EXPR_if: */
         /*     fprintf(f, "ast_expr: if (\n"); */
         /*     AST_expr_print(f, prec+1, e->u.e_if.econd); */
