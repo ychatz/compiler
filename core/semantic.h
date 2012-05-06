@@ -37,7 +37,7 @@
 
 void  AST_program_traverse       (AST_program);
 Scope AST_letdef_traverse        (AST_letdef);
-void  AST_typedef_traverse       (AST_typedef);
+Scope AST_typedef_traverse       (AST_typedef);
 void  AST_def_traverse           (AST_def);
 void  AST_tdef_traverse          (AST_tdef);
 void  AST_constr_traverse        (AST_constr);

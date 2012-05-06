@@ -65,7 +65,7 @@ Identifier to_hash(AST_expr e) {
 Identifier hash_type_id(Identifier id) {
     char temp[4000]; /* TODO: Fix this */
 
-    sprintf(temp, "__char_%s", id->name);
+    sprintf(temp, "__type_%s", id->name);
     return id_make(temp);
 }
 
@@ -159,11 +159,17 @@ Scope AST_letdef_traverse (AST_letdef ld)
     return scope;
 }
 
-void AST_typedef_traverse(AST_typedef td) {
-   if (td == NULL) {
-      return;
-   }
-   AST_tdef_list_traverse(td->list);
+Scope AST_typedef_traverse(AST_typedef td) {
+    Scope scope;
+
+    if (td == NULL) {
+        return NULL;
+    }
+    scope = scope_open(symbol_table);
+
+    AST_tdef_list_traverse(td->list);
+
+    return scope;
 }
 
 void AST_def_traverse (AST_def d)
@@ -557,16 +563,12 @@ void AST_ltdef_list_traverse (AST_ltdef_list l)
     }
     switch (l->kind) { /* TODO: xreiazetai ontws na anoiksoume scope edw? (MALLON OXI) */
         case LTDEF_let:
-            scope_open(symbol_table);
             AST_letdef_traverse(l->head.letdef);
             AST_ltdef_list_traverse(l->tail);
-            scope_close(symbol_table);
             break;
         case LTDEF_type:
-            scope_open(symbol_table);
             AST_typedef_traverse(l->head.typdef);
             AST_ltdef_list_traverse(l->tail);
-            scope_close(symbol_table);
             break;
         default:
             internal("invalid AST");
@@ -594,11 +596,11 @@ void AST_tdef_list_traverse(AST_tdef_list l)
 
 void AST_constr_list_traverse(AST_constr_list l)
 {
-   if (l == NULL) {
-      return;
-   }
-   AST_constr_traverse(l->head);
-   AST_constr_list_traverse(l->tail);
+    if (l == NULL) {
+        return;
+    }
+    AST_constr_traverse(l->head);
+    AST_constr_list_traverse(l->tail);
 }
 
 void AST_par_list_traverse (AST_par_list l)
@@ -658,7 +660,8 @@ void Type_list_traverse(Type_list l) {
     /* TODO: mipws den epitrepontai kapoioi typoi? (p.x. ref) */
     switch(l->head->kind) {
         case TYPE_id:
-            symbol_lookup(symbol_table, l->head->u.t_id.id, LOOKUP_ALL_SCOPES, 1);
+            /* TODO: fix this (currently returns unknown identifier __type_asd) */
+            symbol_lookup(symbol_table, hash_type_id(l->head->u.t_id.id), LOOKUP_ALL_SCOPES, 1);
             break;
 
         default:
