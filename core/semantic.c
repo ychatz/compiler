@@ -27,6 +27,7 @@
 #include "ast.h"
 #include "semantic.h"
 #include "symbol.h"
+#include "pretty.h"
 
 SymbolTable symbol_table;
 SymbolTable type_symbol_table;
@@ -70,6 +71,44 @@ void add_function(const char *name, Type parameter_type, Type result_type ) {
     entry->entry_type = ENTRY_FUNCTION;
     entry->e.function.result_type = result_type;
     /* TODO: add parameter */
+}
+
+Type unify(Type first_type, Type second_type, bool err) {
+    if ( first_type == NULL ) first_type = type_unknown();
+    if ( second_type == NULL ) second_type = type_unknown();
+
+    if ( first_type->kind == TYPE_unknown &&
+            second_type->kind == TYPE_unknown ) return type_unknown();
+
+    if ( first_type->kind == TYPE_unknown ) return second_type;
+    if ( second_type->kind == TYPE_unknown ) return first_type;
+
+    if ( first_type->kind == second_type->kind ) return first_type;
+
+    error("Cannot unify types\n");
+
+    return type_unknown();
+}
+
+bool type_eq(Type a, Type b) {
+    if ( a == NULL || b == NULL ) return true;
+    if ( a->kind == TYPE_unknown || b->kind == TYPE_unknown ) return true;
+    if ( a->kind != b->kind ) return false;
+
+    switch(a->kind) {
+        case TYPE_func:
+            return type_eq(a->u.t_func.type1, b->u.t_func.type1) &&
+                type_eq(a->u.t_func.type2, b->u.t_func.type2);
+        case TYPE_id:
+            return strcmp(a->u.t_id.id->name, b->u.t_id.id->name) == 0;
+        case TYPE_ref:
+            return type_eq(a->u.t_ref.type, b->u.t_ref.type);
+        case TYPE_array:
+            return type_eq(a->u.t_array.type, b->u.t_array.type) &&
+                a->u.t_array.dim == b->u.t_array.dim;
+        default:
+            return true;
+    }
 }
 
 /* ---------------------------------------------------------------------
@@ -127,10 +166,8 @@ void add_function(const char *name, Type parameter_type, Type result_type ) {
 /*    } */
 /* } */
 
-void AST_program_traverse (AST_program p)
-{
+void AST_program_traverse(AST_program p) {
     if (p == NULL) {
-        /* fprintf(f, "<<NULL>>\n"); */
         return;
     }
 
@@ -218,12 +255,11 @@ Scope AST_typedef_traverse(AST_typedef td) {
 
 void AST_def_traverse(AST_def d) {
     SymbolEntry entry;
+    Type expr_type,/* unif_type,*/ par_type;
     int dim_count;
 
-    if (d == NULL) {
-        /* fprintf(f, "<<NULL>>\n"); */
-        return;
-    }
+    if (d == NULL) return;
+
     switch (d->kind) {
         case DEF_normal:
             entry = symbol_enter(symbol_table, d->u.d_normal.id, 0);
@@ -232,8 +268,17 @@ void AST_def_traverse(AST_def d) {
 
             scope_open(symbol_table);
 
-            AST_par_list_traverse(d->u.d_normal.list);
-            AST_expr_traverse(d->u.d_normal.expr);
+            par_type = AST_par_list_traverse(d->u.d_normal.list);
+            if ( par_type == NULL )
+                entry->e.function.type = d->u.d_normal.type;
+            else
+                entry->e.function.type = type_func(par_type, d->u.d_normal.type);
+
+            expr_type = AST_expr_traverse(d->u.d_normal.expr);
+
+            if ( !type_eq(expr_type, entry->e.function.result_type) )
+                error("Function expression type does not match its definition\n");
+            /* entry->e.function.result_type = unify(expr_type, d->u.d_normal.type, 1); */
 
             scope_close(symbol_table);
             break;
@@ -276,7 +321,7 @@ void AST_constr_traverse(AST_constr c, Type user_type) {
     /* do not allow two types to use the same constructor */
     entry = symbol_lookup(type_symbol_table, c->id, LOOKUP_ALL_SCOPES, 0);
     if ( entry != NULL )
-        error("Constructor %s is used more than one times\n",  c->id->name);
+        error("Constructor %s is used more than one time\n",  c->id->name);
 
     /* do not allow the same constructor to defined twice in a type definition */
     entry = symbol_enter(type_symbol_table, c->id, 1);
@@ -286,21 +331,20 @@ void AST_constr_traverse(AST_constr c, Type user_type) {
     Type_list_traverse(c->list);
 }
 
-void AST_par_traverse (AST_par p)
+Type AST_par_traverse(AST_par p)
 {
     SymbolEntry entry;
 
-    if (p == NULL) {
-        /* fprintf(f, "<<NULL>>\n"); */
-        return;
-    }
+    if (p == NULL) return NULL;
 
     entry = symbol_enter(symbol_table, p->id, 1);
     entry->entry_type = ENTRY_PARAMETER;
     entry->e.parameter.type = p->type;
+
+    return p->type;
 }
 
-Type AST_expr_traverse (AST_expr e) {
+Type AST_expr_traverse(AST_expr e) {
     SymbolEntry entry;
     Type expr1_type, expr2_type, expr3_type, result_type;
     Scope scope;
@@ -363,8 +407,7 @@ Type AST_expr_traverse (AST_expr e) {
 
             switch(entry->entry_type) {
                 case ENTRY_FUNCTION:
-                    /* TODO: na koitame an ontws exei 0 parametrous */
-                    return entry->e.function.result_type;
+                    return entry->e.function.type;
                 case ENTRY_PARAMETER:
                     return entry->e.parameter.type;
                 case ENTRY_IDENTIFIER:
@@ -372,21 +415,31 @@ Type AST_expr_traverse (AST_expr e) {
                 case ENTRY_VARIABLE:
                     return entry->e.variable.type;
                 default:
-                    error("Unknown identifier %s\n", e->u.e_id.id);
+                    error("Unknown identifier %s\n", e->u.e_id.id->name);
             }
 
         case EXPR_Id: 
             entry = symbol_lookup(type_symbol_table, e->u.e_Id.id, LOOKUP_ALL_SCOPES, 1);
 
             if (entry->entry_type != ENTRY_CONSTRUCTOR ) {
-                internal("%s is not a constructor\n", e->u.e_Id.id);
+                error("'%s' is not a constructor\n", e->u.e_Id.id->name);
             }
 
             return entry->e.constructor.type;
 
         case EXPR_call: 
             entry = symbol_lookup(symbol_table, e->u.e_call.id, LOOKUP_ALL_SCOPES, 1);
-            /*TODO: uncomment this AST_expr_list_traverse(e->u.e_call.list); */
+
+            if  ( entry->entry_type != ENTRY_FUNCTION )
+                error("'%s' is not a function\n", e->u.e_call.id->name);
+
+            expr1_type = AST_expr_list_traverse(e->u.e_call.list);
+
+            if ( !type_eq(expr1_type, entry->e.function.type->u.t_func.type1) ) {
+                error("The types of the arguments of function '%s' do not match the definition\n", e->u.e_call.id->name);
+                Type_print(stdout, 0, entry->e.function.type);
+            }
+
             return entry->e.function.result_type;
         /*case EXPR_Call: 
              
@@ -403,9 +456,9 @@ Type AST_expr_traverse (AST_expr e) {
         case EXPR_dim:
             entry = symbol_lookup(symbol_table, e->u.e_dim.id, LOOKUP_ALL_SCOPES, 1);
             if ( entry->entry_type != ENTRY_VARIABLE )
-                error("Type mismatch: Identifier %s is not a variable\n", e->u.e_dim.id->name);
+                error("Type mismatch: Identifier '%s' is not a variable\n", e->u.e_dim.id->name);
             if ( entry->e.variable.type->kind != TYPE_array )
-                error("Type mismatch: %s is not an array\n", e->u.e_dim.id->name);
+                error("Type mismatch: '%s' is not an array\n", e->u.e_dim.id->name);
             return type_int();
 
         case EXPR_new:
@@ -468,7 +521,7 @@ Type AST_expr_traverse (AST_expr e) {
             internal("invalid AST");
     }
 
-    return NULL;
+    return type_unknown();
 }
 
 void AST_clause_traverse(AST_clause c)
@@ -629,11 +682,9 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
 
 void AST_ltdef_list_traverse (AST_ltdef_list l)
 {
-    if (l == NULL) {
-        /* fprintf(f, "<<NULL>>\n"); */
-        return;
-    }
-    switch (l->kind) { /* TODO: xreiazetai ontws na anoiksoume scope edw? (MALLON OXI) */
+    if (l == NULL) return;
+
+    switch (l->kind) {
         case LTDEF_let:
             AST_letdef_traverse(l->head.letdef);
             AST_ltdef_list_traverse(l->tail);
@@ -671,14 +722,18 @@ void AST_constr_list_traverse(AST_constr_list l, Type user_type)
     AST_constr_list_traverse(l->tail, user_type);
 }
 
-void AST_par_list_traverse(AST_par_list l)
+Type AST_par_list_traverse(AST_par_list l)
 {
-    if (l == NULL) {
-        /*fprintf(f, "<<NULL>>\n");*/
-        return;
-    }
-    AST_par_traverse(l->head);
-    AST_par_list_traverse(l->tail);
+    Type temp, temp2;
+
+    if (l == NULL) return NULL;
+
+    temp = AST_par_traverse(l->head);
+    temp2 = AST_par_list_traverse(l->tail);
+
+    if ( temp == NULL ) return NULL;
+    if ( temp2 == NULL ) return temp;
+    return type_func(temp, temp2);
 }
 
 int AST_expr_list_count(AST_expr_list l) {
@@ -687,24 +742,22 @@ int AST_expr_list_count(AST_expr_list l) {
    return 1 + AST_expr_list_count(l->tail);
 }
 
-/* void AST_expr_list_print (FILE * f, int prec, AST_expr_list l) */
-/* { */
-/*    indent(f, prec); */
-/*    if (l == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "ast_expr_list (\n"); */
-/*    AST_expr_print(f, prec+1, l->head); */
-/*    AST_expr_list_print(f, prec+1, l->tail); */
-/*    indent(f, prec); fprintf(f, ")\n"); */
-/* } */
+Type AST_expr_list_traverse(AST_expr_list l) {
+   Type temp, temp2;
+
+   if (l == NULL) return NULL;
+
+   temp = AST_expr_traverse(l->head);
+   temp2 =AST_expr_list_traverse(l->tail);
+
+   if ( temp2 == NULL ) return temp;
+   return type_func(temp, temp2);
+}
 
 void AST_clause_list_traverse(AST_clause_list l)
 {
-   if (l == NULL) {
-      return;
-   }
+   if (l == NULL) return;
+
    AST_clause_traverse(l->head);
    AST_clause_list_traverse(l->tail);
 }

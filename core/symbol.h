@@ -91,8 +91,9 @@ struct SymbolEntry_tag {
        } constant;
 
       struct {
-          /* SymbolEntry * first_argument; */
-          /* SymbolEntry * last_argument; */
+          SymbolEntry *first_argument;
+          SymbolEntry *last_argument;
+          Type type;
           Type result_type;
       } function;
 

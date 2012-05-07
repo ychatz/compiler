@@ -105,3 +105,10 @@ Type type_func (Type type1, Type type2)
    result->u.t_func.type2 = type2;
    return result;
 }
+
+
+Type type_unknown() {
+   Type result = new(sizeof(struct Type_tag));
+   result->kind = TYPE_unknown;
+   return result;
+}
