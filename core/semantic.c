@@ -219,7 +219,7 @@ void AST_def_traverse(AST_def d) {
 
             par_type = AST_par_list_traverse(d->u.d_normal.list);
             if ( par_type == NULL )
-                entry->e.function.type = type_func(NULL, d->u.d_normal.type);
+                entry->e.function.type = d->u.d_normal.type;
             else
                 entry->e.function.type = type_func(par_type, d->u.d_normal.type);
 
@@ -578,8 +578,9 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
         case ast_binop_mod:
             if ( !type_eq(expr1, type_int()) )
                 error("Type mismatch in the left argument\n");
-            if ( !type_eq(expr2, type_int()) )
+            if ( !type_eq(expr2, type_int()) ) {
                 error("Type mismatch in the right argument\n");
+            }
             return type_int();
 
         case ast_binop_fplus:
