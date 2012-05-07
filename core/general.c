@@ -47,7 +47,7 @@ bool flagVerbose = true;
 void terminate (int code)
 {
    if (flagVerbose)
-      message("\nErrors:   %d\nWarnings: %d", numErrors, numWarnings);
+      message("\r\nErrors:   %d\nWarnings: %d", numErrors, numWarnings);
    exit(code);
 }
 
