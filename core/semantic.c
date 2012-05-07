@@ -523,7 +523,7 @@ Type AST_expr_traverse(AST_expr e) {
         case EXPR_match:
             /* TODO: type checking */
             expr1_type = AST_expr_traverse(e->u.e_match.expr);
-            AST_clause_list_traverse(e->u.e_match.list);
+            AST_clause_list_traverse(e->u.e_match.list, expr1_type);
             return NULL;
 
         default:
@@ -533,59 +533,62 @@ Type AST_expr_traverse(AST_expr e) {
     return type_unknown();
 }
 
-void AST_clause_traverse(AST_clause c)
-{
+void AST_clause_traverse(AST_clause c, Type type) {
     if (c == NULL) {
         return;
     }
-    /* TODO: uncomment this AST_pattern_print(c->pattern); */
+    AST_pattern_traverse(c->pattern, type);
     /*       ... and this AST_expr_print(c->expr); */
 }
 
-/* void AST_pattern_print (FILE * f, int prec, AST_pattern p) */
-/* { */
-/*    indent(f, prec); */
-/*    if (p == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    switch (p->kind) { */
-/*       case PATTERN_iconst: */
-/*          fprintf(f, "ast_pattern: iconst (\n"); */
-/*          RepInt_print(f, prec+1, p->u.p_iconst.rep); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case PATTERN_fconst: */
-/*          fprintf(f, "ast_pattern: fconst (\n"); */
-/*          RepFloat_print(f, prec+1, p->u.p_fconst.rep); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case PATTERN_cconst: */
-/*          fprintf(f, "ast_pattern: cconst (\n"); */
-/*          RepChar_print(f, prec+1, p->u.p_cconst.rep); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case PATTERN_true: */
-/*          fprintf(f, "ast_pattern: true\n"); */
-/*          break; */
-/*       case PATTERN_false: */
-/*          fprintf(f, "ast_pattern: false\n"); */
-/*          break; */
-/*       case PATTERN_id: */
-/*          fprintf(f, "ast_pattern: id (\n"); */
-/*          Identifier_print(f, prec+1, p->u.p_id.id); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case PATTERN_Id: */
-/*          fprintf(f, "ast_pattern: Id (\n"); */
-/*          Identifier_print(f, prec+1, p->u.p_Id.id); */
-/*          AST_pattern_list_print(f, prec+1, p->u.p_Id.list); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       default: */
-/*          internal("invalid AST"); */
-/*    } */
-/* } */
+void AST_pattern_traverse(AST_pattern p, Type type) {
+    SymbolEntry entry;
+
+    if (p == NULL) return;
+
+    switch (p->kind) {
+        case PATTERN_iconst:
+            if ( !type_eq(type, type_int()) )
+                error("Type mismatch: Int pattern found, but type is not int\n");
+            break;
+
+        case PATTERN_fconst:
+            if ( !type_eq(type, type_float()) )
+                error("Type mismatch: Float pattern found, but type is not float\n");
+            break;
+
+        case PATTERN_cconst:
+            if ( !type_eq(type, type_float()) )
+                error("Type mismatch: Char pattern found, but type is not char\n");
+            break;
+
+        case PATTERN_true:
+            if ( !type_eq(type, type_bool()) )
+                error("Type mismatch: Pattern 'true' found, but type is not bool\n");
+            break;
+
+        case PATTERN_false:
+            if ( !type_eq(type, type_bool()) )
+                error("Type mismatch: Pattern 'false' found, but type is not bool\n");
+            break;
+
+        case PATTERN_id:
+            break;
+
+        case PATTERN_Id:
+            entry = symbol_lookup(type_symbol_table, p->u.p_Id.id, LOOKUP_ALL_SCOPES, 1);
+            if ( !type_eq(type, entry->e.constructor.type) )
+                error("Type mismatch: Constructor in pattern does not match the type of the expression\n");
+
+            type = entry->e.constructor.argument_type;
+            AST_pattern_list_traverse(p->u.p_Id.list, type);
+
+            break;
+
+        default:
+            internal("invalid AST");
+    }
+}
 
 Type AST_unop_traverse(AST_unop op, Type expr) {
     switch (op) {
@@ -678,8 +681,8 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
         case ast_binop_assign:
             if ( expr1->kind != TYPE_ref ) 
                 error("Type mismatch: First argument must be of type ref\n");
-            else if ( expr1->u.t_ref.type->kind != expr2->kind )
-                error("Type mismatch: First argument must be of type ref\n"); /* TODO: fix this message */
+            else if ( !type_eq(expr1->u.t_ref.type, expr2) )
+                error("Type mismatch: The arguments of the assignment operator do not match\n");
             return type_unit();
 
         default:
@@ -763,27 +766,21 @@ Type AST_expr_list_traverse(AST_expr_list l) {
     return type_func(temp, temp2);
 }
 
-void AST_clause_list_traverse(AST_clause_list l)
+void AST_clause_list_traverse(AST_clause_list l, Type type)
 {
     if (l == NULL) return;
 
-    AST_clause_traverse(l->head);
-    AST_clause_list_traverse(l->tail);
+    AST_clause_traverse(l->head, type);
+    AST_clause_list_traverse(l->tail, type);
 }
 
-/* void AST_pattern_list_print (FILE * f, int prec, AST_pattern_list l) */
-/* { */
-/*    indent(f, prec); */
-/*    if (l == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "ast_par_list (\n"); */
-/*    AST_pattern_print(f, prec+1, l->head); */
-/*    AST_pattern_list_print(f, prec+1, l->tail); */
-/*    indent(f, prec); fprintf(f, ")\n"); */
-/* } */
-/*  */
+void AST_pattern_list_traverse(AST_pattern_list l, Type type) {
+    if (l == NULL) return;
+
+    AST_pattern_traverse(l->head, type->u.t_func.type1);
+    AST_pattern_list_traverse(l->tail, type->u.t_func.type2);
+}
+
 Type Type_list_traverse(Type_list l) {
     Type temp, temp2;
 
