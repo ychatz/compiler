@@ -775,10 +775,24 @@ void AST_clause_list_traverse(AST_clause_list l, Type type)
 }
 
 void AST_pattern_list_traverse(AST_pattern_list l, Type type) {
-    if (l == NULL) return;
+    if (l == NULL) {
+        if ( type != NULL )
+            error ("The number of arguments given to the constructor does not match the type definition\n");
+        return;
+    }
+    else if ( type == NULL ) {
+        error ("The number of arguments given to the constructor does not match the type definition\n");
+        return;
+    }
 
-    AST_pattern_traverse(l->head, type->u.t_func.type1);
-    AST_pattern_list_traverse(l->tail, type->u.t_func.type2);
+    if ( type->kind == TYPE_func ) {
+        AST_pattern_traverse(l->head, type->u.t_func.type1);
+        AST_pattern_list_traverse(l->tail, type->u.t_func.type2);
+    }
+    else {
+        AST_pattern_traverse(l->head, type);
+        AST_pattern_list_traverse(l->tail, NULL);
+    }
 }
 
 Type Type_list_traverse(Type_list l) {
