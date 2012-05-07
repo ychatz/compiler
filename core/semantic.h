@@ -60,7 +60,7 @@ void  AST_clause_list_traverse   (AST_clause_list);
 
 int   AST_expr_list_count        (AST_expr_list);
 
-void  Type_list_traverse         (Type_list);
+Type  Type_list_traverse         (Type_list);
 
 
 #endif

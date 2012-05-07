@@ -116,6 +116,7 @@ struct SymbolEntry_tag {
 
       struct {
           Type type;
+          Type argument_type;
       } constructor;
    } e;
 };

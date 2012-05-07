@@ -328,7 +328,7 @@ void AST_constr_traverse(AST_constr c, Type user_type) {
 
     entry->entry_type = ENTRY_CONSTRUCTOR;
     entry->e.constructor.type = user_type;
-    Type_list_traverse(c->list);
+    entry->e.constructor.argument_type = Type_list_traverse(c->list);
 }
 
 Type AST_par_traverse(AST_par p)
@@ -437,22 +437,31 @@ Type AST_expr_traverse(AST_expr e) {
 
             if ( !type_eq(expr1_type, entry->e.function.type->u.t_func.type1) ) {
                 error("The types of the arguments of function '%s' do not match the definition\n", e->u.e_call.id->name);
-                Type_print(stdout, 0, entry->e.function.type);
             }
 
             return entry->e.function.result_type;
-        /*case EXPR_Call: 
-             
-            Identifier_print(f, prec+1, e->u.e_Call.id); 
-            AST_expr_list_traverse(e->u.e_Call.list); 
-             
-            break; 
-        case EXPR_arrel: 
-        
-            Identifier_print(f, prec+1, e->u.e_arrel.id); 
-            AST_expr_list_traverse(e->u.e_arrel.list); 
-             
-            break; */
+
+        case EXPR_Call: 
+            entry = symbol_lookup(type_symbol_table, e->u.e_Call.id, LOOKUP_ALL_SCOPES, 1);
+
+            if (entry->entry_type != ENTRY_CONSTRUCTOR ) {
+                error("'%s' is not a constructor\n", e->u.e_Call.id->name);
+            }
+            expr1_type = AST_expr_list_traverse(e->u.e_Call.list); 
+            if ( !type_eq(expr1_type, entry->e.constructor.argument_type) ) {
+                error("The types of the arguments of the constructor '%s' do not match the definition\n", e->u.e_Call.id->name);
+                Type_print(stdout, 0, entry->e.function.type);
+            }
+
+            return entry->e.constructor.type;
+
+        /*case EXPR_arrel: 
+
+          Identifier_print(f, prec+1, e->u.e_arrel.id); 
+          AST_expr_list_traverse(e->u.e_arrel.list); 
+
+          break; */
+
         case EXPR_dim:
             entry = symbol_lookup(symbol_table, e->u.e_dim.id, LOOKUP_ALL_SCOPES, 1);
             if ( entry->entry_type != ENTRY_VARIABLE )
@@ -526,11 +535,11 @@ Type AST_expr_traverse(AST_expr e) {
 
 void AST_clause_traverse(AST_clause c)
 {
-   if (c == NULL) {
-      return;
-   }
-   /* TODO: uncomment this AST_pattern_print(c->pattern); */
-   /*       ... and this AST_expr_print(c->expr); */
+    if (c == NULL) {
+        return;
+    }
+    /* TODO: uncomment this AST_pattern_print(c->pattern); */
+    /*       ... and this AST_expr_print(c->expr); */
 }
 
 /* void AST_pattern_print (FILE * f, int prec, AST_pattern p) */
@@ -737,29 +746,29 @@ Type AST_par_list_traverse(AST_par_list l)
 }
 
 int AST_expr_list_count(AST_expr_list l) {
-   if (l == NULL) return 0;
+    if (l == NULL) return 0;
 
-   return 1 + AST_expr_list_count(l->tail);
+    return 1 + AST_expr_list_count(l->tail);
 }
 
 Type AST_expr_list_traverse(AST_expr_list l) {
-   Type temp, temp2;
+    Type temp, temp2;
 
-   if (l == NULL) return NULL;
+    if (l == NULL) return NULL;
 
-   temp = AST_expr_traverse(l->head);
-   temp2 =AST_expr_list_traverse(l->tail);
+    temp = AST_expr_traverse(l->head);
+    temp2 =AST_expr_list_traverse(l->tail);
 
-   if ( temp2 == NULL ) return temp;
-   return type_func(temp, temp2);
+    if ( temp2 == NULL ) return temp;
+    return type_func(temp, temp2);
 }
 
 void AST_clause_list_traverse(AST_clause_list l)
 {
-   if (l == NULL) return;
+    if (l == NULL) return;
 
-   AST_clause_traverse(l->head);
-   AST_clause_list_traverse(l->tail);
+    AST_clause_traverse(l->head);
+    AST_clause_list_traverse(l->tail);
 }
 
 /* void AST_pattern_list_print (FILE * f, int prec, AST_pattern_list l) */
@@ -775,10 +784,10 @@ void AST_clause_list_traverse(AST_clause_list l)
 /*    indent(f, prec); fprintf(f, ")\n"); */
 /* } */
 /*  */
-void Type_list_traverse(Type_list l) {
-    if (l == NULL) {
-        return;
-    }
+Type Type_list_traverse(Type_list l) {
+    Type temp, temp2;
+
+    if (l == NULL) return NULL;
 
     /* TODO: mipws den epitrepontai kapoioi typoi? (p.x. ref) */
     switch(l->head->kind) {
@@ -789,5 +798,10 @@ void Type_list_traverse(Type_list l) {
         default:
             break;
     }
-    Type_list_traverse(l->tail);
+
+    temp = l->head;
+    temp2 = Type_list_traverse(l->tail);
+
+    if ( temp2 == NULL ) return temp;
+    return type_func(temp, temp2);
 }
