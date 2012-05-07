@@ -10,7 +10,7 @@ AST_program ast;
 %}
 
 %start program
-%expect 23
+/*%expect 23*/
 
 %union {
    AST_letdef        letdef;
@@ -109,6 +109,7 @@ AST_program ast;
 %nonassoc "let" "in"
 %left ';'
 %nonassoc "if" "then"
+%nonassoc "else"
 %nonassoc ":="
 %left "||"
 %left "&&"
@@ -223,7 +224,7 @@ type: "unit" 						{ $$ = type_unit(); }
     | "char"						{ $$ = type_char(); }
     | "bool"						{ $$ = type_bool(); }
     | "float"						{ $$ = type_float(); }
-    | '(' type ')'					{ $$ = $2 }
+    | '(' type ')'					{ $$ = $2; }
     | type "ref"					{ $$ = type_ref($1); }
     | type "->" type					{ $$ = type_func($1, $3); }
     | "array" '[' multi_asterisks ']' "of" type		{ $$ = type_array($3, $6); } 
