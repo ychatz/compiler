@@ -90,6 +90,16 @@ Type unify(Type first_type, Type second_type, bool err) {
     return type_unknown();
 }
 
+bool type_check_ref(Type a, bool deft) {
+    if ( a == NULL ) return deft;
+    return a->kind == TYPE_ref;
+}
+
+bool type_check_array(Type a, bool deft) {
+    if ( a == NULL ) return deft;
+    return a->kind == TYPE_array;
+}
+
 bool type_eq(Type a, Type b) {
     if ( a == NULL || b == NULL ) return true;
     if ( a->kind == TYPE_unknown || b->kind == TYPE_unknown ) return true;
@@ -404,19 +414,35 @@ Type AST_expr_traverse(AST_expr e) {
 
             return entry->e.constructor.type;
 
-        /*case EXPR_arrel: 
+        case EXPR_arrel: 
+            entry = symbol_lookup(symbol_table, e->u.e_arrel.id, LOOKUP_ALL_SCOPES, 1);
+            AST_expr_list_traverse(e->u.e_arrel.list); 
 
-          Identifier_print(f, prec+1, e->u.e_arrel.id); 
-          AST_expr_list_traverse(e->u.e_arrel.list); 
+            switch(entry->entry_type) {
+                case ENTRY_VARIABLE:
+                    if ( entry->e.variable.type->kind != TYPE_array )
+                        error("Type mismatch: '%s' is not an array\n", e->u.e_arrel.id->name);
 
-          break; */
+                    return entry->e.variable.type->u.t_array.type;
+                case ENTRY_PARAMETER:
+                    return entry->e.parameter.type; /* TODO: fix this */
+                default:
+                    error("Type mismatch: '%s' is not an array\n", e->u.e_dim.id->name);
+            }
 
         case EXPR_dim:
             entry = symbol_lookup(symbol_table, e->u.e_dim.id, LOOKUP_ALL_SCOPES, 1);
-            if ( entry->entry_type != ENTRY_VARIABLE )
-                error("Type mismatch: Identifier '%s' is not a variable\n", e->u.e_dim.id->name);
-            if ( entry->e.variable.type->kind != TYPE_array )
-                error("Type mismatch: '%s' is not an array\n", e->u.e_dim.id->name);
+            switch(entry->entry_type) {
+                case ENTRY_VARIABLE:
+                    if ( entry->e.variable.type->kind != TYPE_array )
+                        error("Type mismatch: '%s' is not an array\n", e->u.e_dim.id->name);
+                    break;
+                case ENTRY_PARAMETER:
+                    break;
+                default:
+                    error("Type mismatch: '%s' is not a valid argument for operator 'dim'\n", e->u.e_dim.id->name);
+            }
+
             return type_int();
 
         case EXPR_new:
@@ -542,23 +568,23 @@ Type AST_unop_traverse(AST_unop op, Type expr) {
     switch (op) {
         case ast_unop_plus:
         case ast_unop_minus:
-            if ( expr->kind != TYPE_int )
+            if ( !type_eq(expr, type_int()) )
                 error("Type mismatch: Argument is not of type int\n");
             return type_int();
 
         case ast_unop_fplus:
         case ast_unop_fminus:
-            if ( expr->kind != TYPE_float )
+            if ( !type_eq(expr, type_float()) )
                 error("Type mismatch: Argument is not of type float\n");
             return type_float();
 
         case ast_unop_exclam:
-            if ( expr->kind != TYPE_ref )
+            if ( !type_check_ref(expr, true) )
                 error("Type mismatch: Argument is not of type ref\n");
-            return expr->u.t_ref.type;
+            return (expr == NULL ? NULL : expr->u.t_ref.type);
 
         case ast_unop_not:
-            if ( expr->kind != TYPE_bool )
+            if ( !type_eq(expr, type_bool()) )
                 error("Type mismatch: Argument is not of type bool\n");
             return type_bool();
 
@@ -601,7 +627,7 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
             if ( !type_eq(expr1, expr2) )
                 error("Type mismatch: Arguments must be of the same type\n");
             if ( !type_eq(expr1, type_char()) && !type_eq(expr1, type_float()) &&
-                        !type_eq(expr1, type_int()) )
+                    !type_eq(expr1, type_int()) )
                 error("Type mismatch: Arguments must be of type char, float or int\n");
             return type_bool();
 
@@ -611,9 +637,9 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
         case ast_binop_phne:
             if ( !type_eq(expr1, expr2) )
                 error("Type mismatch: Arguments must be of the same type\n");
-            if ( expr1->kind == TYPE_array )
+            if ( type_check_array(expr1, false) || type_check_array(expr2, false) )
                 error("Type mismatch: Arguments can't be of type array\n");
-            if ( expr1->kind == TYPE_func )
+            if ( type_check_ref(expr1, false) || type_check_ref(expr2, false) )
                 error("Type mismatch: Arguments can't be of type function\n");
             return type_bool();
 
@@ -629,9 +655,9 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
             return expr2;
 
         case ast_binop_assign:
-            if ( expr1->kind != TYPE_ref ) 
+            if ( !type_check_ref(expr1,true) ) 
                 error("Type mismatch: First argument must be of type ref\n");
-            else if ( !type_eq(expr1->u.t_ref.type, expr2) )
+            else if ( expr1 != NULL && !type_eq(expr1->u.t_ref.type, expr2) )
                 error("Type mismatch: The arguments of the assignment operator do not match\n");
             return type_unit();
 
