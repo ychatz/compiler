@@ -171,8 +171,8 @@ void AST_program_traverse(AST_program p) {
         return;
     }
 
-    type_symbol_table = symbol_make(193); /* TODO: find a better size */
-    symbol_table = symbol_make(193); /* TODO: find a better size */
+    type_symbol_table = symbol_make(28447);
+    symbol_table = symbol_make(28447);
     scope_open(symbol_table);
 
 #define ADD_FUNC(str, par, res) \
