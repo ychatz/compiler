@@ -1,6 +1,6 @@
 type tree = Nil | Node of int tree tree
 
-let rec treeInstert t n = 
+let rec treeInsert t n = 
 	match t with
 		  Nil				-> Node n Nil Nil
 		| Node m t1 t2 ->		  if n < m then Node m (treeInsert t1 n) t2

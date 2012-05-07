@@ -493,10 +493,10 @@ Type AST_expr_traverse(AST_expr e) {
             entry->entry_type = ENTRY_IDENTIFIER;
             entry->e.identifier.type = type_int();
             expr1_type = AST_expr_traverse(e->u.e_for.expr1);
-            if ( expr1_type->kind != TYPE_int )
+            if ( !type_eq(expr1_type, type_int()) )
                 error("Type mismatch: Start part of 'for' is not of type int\n");             
             expr2_type = AST_expr_traverse(e->u.e_for.expr2); 
-            if ( expr2_type->kind != TYPE_int )
+            if ( !type_eq(expr2_type, type_int()) )
                 error("Type mismatch: End part of 'for' is not of type int\n");
             expr3_type = AST_expr_traverse(e->u.e_for.ebody); 
             if ( !type_eq(expr3_type, type_unit()) )
