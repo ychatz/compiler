@@ -490,17 +490,17 @@ Type AST_expr_traverse(AST_expr e) {
 
         case EXPR_if: 
             expr1_type = AST_expr_traverse(e->u.e_if.econd);
-            if ( expr1_type->kind != TYPE_bool )
+            if ( !type_eq(expr1_type, type_bool()) )
                 error("Type mismatch: Condition is not of type bool\n");
             expr2_type = AST_expr_traverse(e->u.e_if.ethen); 
             expr3_type = AST_expr_traverse(e->u.e_if.eelse);       
-            if ( expr2_type->kind != expr3_type->kind )
+            if ( !type_eq(expr2_type, expr3_type) )
                 error("Type mismatch: Then and else parts don't match\n");
             return expr2_type;
 
         case EXPR_while:
             expr1_type = AST_expr_traverse(e->u.e_while.econd);
-            if ( expr1_type->kind != TYPE_bool )
+            if ( !type_eq(expr1_type, type_bool()) )
                 error("Type mismatch: Condition is not of type bool\n");
             return AST_expr_traverse(e->u.e_while.ebody);
 
@@ -516,13 +516,12 @@ Type AST_expr_traverse(AST_expr e) {
             if ( expr2_type->kind != TYPE_int )
                 error("Type mismatch: End part of 'for' is not of type int\n");
             expr3_type = AST_expr_traverse(e->u.e_for.ebody); 
-            if ( expr2_type->kind != TYPE_unit )
+            if ( !type_eq(expr2_type, type_unit()) )
                 error("Type mismatch: Expression of 'for' is not of type unit\n");
             scope_close(symbol_table);
             return type_unit();
 
         case EXPR_match:
-            /* TODO: type checking */
             expr1_type = AST_expr_traverse(e->u.e_match.expr);
             AST_clause_list_traverse(e->u.e_match.list, expr1_type);
             return NULL;
@@ -629,9 +628,9 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
         case ast_binop_times:
         case ast_binop_div:
         case ast_binop_mod:
-            if ( expr1->kind != TYPE_int )
+            if ( !type_eq(expr1, type_int()) )
                 error("Type mismatch in the left argument\n");
-            if ( expr2->kind != TYPE_int )
+            if ( !type_eq(expr2, type_int()) )
                 error("Type mismatch in the right argument\n");
             return type_int();
 
@@ -640,9 +639,9 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
         case ast_binop_ftimes:
         case ast_binop_fdiv:
         case ast_binop_exp:
-            if ( expr1->kind != TYPE_float )
+            if ( !type_eq(expr1, type_float()) )
                 error("Type mismatch in the left argument\n");
-            if ( expr2->kind != TYPE_float )
+            if ( !type_eq(expr1, type_float()) )
                 error("Type mismatch in the right argument\n");
             return type_float();
 
@@ -650,9 +649,10 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
         case ast_binop_gt:
         case ast_binop_le:
         case ast_binop_ge:
-            if ( expr1->kind != expr2->kind )
+            if ( !type_eq(expr1, expr2) )
                 error("Type mismatch: Arguments must be of the same type\n");
-            if ( expr1->kind != TYPE_char && expr1->kind != TYPE_float && expr1->kind != TYPE_int )
+            if ( !type_eq(expr1, type_char()) && !type_eq(expr1, type_float()) &&
+                        !type_eq(expr1, type_int()) )
                 error("Type mismatch: Arguments must be of type char, float or int\n");
             return type_bool();
 
@@ -660,7 +660,7 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
         case ast_binop_ne:
         case ast_binop_pheq:
         case ast_binop_phne:
-            if ( expr1->kind != expr2->kind )
+            if ( !type_eq(expr1, expr2) )
                 error("Type mismatch: Arguments must be of the same type\n");
             if ( expr1->kind == TYPE_array )
                 error("Type mismatch: Arguments can't be of type array\n");
@@ -670,9 +670,9 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
 
         case ast_binop_and:
         case ast_binop_or:
-            if ( expr1->kind != TYPE_bool )
+            if ( !type_eq(expr1, type_bool()) )
                 error("Type mismatch in the left argument\n");
-            if ( expr2->kind != TYPE_bool )
+            if ( !type_eq(expr2, type_bool()) )
                 error("Type mismatch in the right argument\n");
             return type_bool();
 
