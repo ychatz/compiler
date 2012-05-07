@@ -75,7 +75,8 @@ struct SymbolEntry_tag {
        ENTRY_PARAMETER,
        ENTRY_VARIABLE,
        ENTRY_TYPE,
-       ENTRY_CONSTRUCTOR
+       ENTRY_CONSTRUCTOR,
+       ENTRY_IDENTIFIER
    } entry_type;
 
    union {
@@ -90,33 +91,38 @@ struct SymbolEntry_tag {
        } constant;
 
       struct {
-         /* SymbolEntry * first_argument; */
-         /* SymbolEntry * last_argument; */
-         Type result_type;
+          /* SymbolEntry * first_argument; */
+          /* SymbolEntry * last_argument; */
+          Type result_type;
       } function;
 
       struct {
-         Type type;
+          Type type;
       } parameter;
 
       struct {
-         Type type;
+          Type type;
       } variable;
 
       struct {
-         Type type;
+          Scope scope; /* Εμβέλεια όπου βρίσκεται ο τύπος και οι κατασκευαστές του */
+          Type type;
       } type;
+
+      struct {
+          Type type;
+      } identifier;
    } e;
 };
 
 struct Scope_tag {
-   /* Η διαχείριση αυτών των πεδίων γίνεται αυτόματα */
-   Scope        parent;                       /* Περιβάλλουσα εμβέλεια */
-   SymbolEntry  entries;                      /* Σύμβολα της εμβέλειας */
-   unsigned int nesting;                      /* Βάθος φωλιάσματος     */
-   bool         hidden;                       /* Κρυφή εμβέλεια ή όχι  */
+    /* Η διαχείριση αυτών των πεδίων γίνεται αυτόματα */
+    Scope        parent;                       /* Περιβάλλουσα εμβέλεια */
+    SymbolEntry  entries;                      /* Σύμβολα της εμβέλειας */
+    unsigned int nesting;                      /* Βάθος φωλιάσματος     */
+    bool         hidden;                       /* Κρυφή εμβέλεια ή όχι  */
 
-   /* Συμπληρώστε ό,τι άλλο θέλετε */
+    /* Συμπληρώστε ό,τι άλλο θέλετε */
 };
 
 /* ---------------------------------------------------------------------
@@ -130,6 +136,6 @@ void        scope_hide    (Scope scope, bool flag);
 void        scope_insert  (SymbolTable table, Scope scope);
 SymbolEntry symbol_enter  (SymbolTable table, Identifier id, bool err);
 SymbolEntry symbol_lookup (SymbolTable table, Identifier id, LookupType type,
-                           bool err);
+        bool err);
 
 #endif

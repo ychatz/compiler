@@ -29,6 +29,7 @@
 #include "symbol.h"
 
 SymbolTable symbol_table;
+SymbolTable type_symbol_table;
 
 Identifier to_hash(AST_expr e) {
     char temp[4000]; /* TODO: Fix this */
@@ -62,11 +63,13 @@ Identifier to_hash(AST_expr e) {
     return id_make(temp);
 }
 
-Identifier hash_type_id(Identifier id) {
-    char temp[4000]; /* TODO: Fix this */
+void add_function(const char *name, Type parameter_type, Type result_type ) {
+    SymbolEntry entry;
 
-    sprintf(temp, "__type_%s", id->name);
-    return id_make(temp);
+    entry = symbol_enter(symbol_table, id_make(name), 0);
+    entry->entry_type = ENTRY_FUNCTION;
+    entry->e.function.result_type = result_type;
+    /* TODO: add parameter */
 }
 
 /* ---------------------------------------------------------------------
@@ -130,9 +133,50 @@ void AST_program_traverse (AST_program p)
         /* fprintf(f, "<<NULL>>\n"); */
         return;
     }
+
+    type_symbol_table = symbol_make(193); /* TODO: find a better size */
     symbol_table = symbol_make(193); /* TODO: find a better size */
     scope_open(symbol_table);
-    /* TODO: insert run-time library functions to symbol table here */
+
+#define ADD_FUNC(str, par, res) \
+    add_function(str, type_##par(), type_##res());
+#define type_STRING() \
+    type_array(1, type_char())
+#define type_INT_REF() \
+    type_ref(type_int())
+
+    ADD_FUNC("print_int", int, unit)
+    ADD_FUNC("print_bool", bool, unit)
+    ADD_FUNC("print_char", char, unit)
+    ADD_FUNC("print_float", float, unit)
+    ADD_FUNC("print_string", STRING, unit)
+
+    ADD_FUNC("read_int", unit, int)
+    ADD_FUNC("read_bool", unit, bool)
+    ADD_FUNC("read_char", unit, char)
+    ADD_FUNC("read_float", unit, float)
+    ADD_FUNC("read_string", STRING, unit)
+
+    ADD_FUNC("fabs", float, float)
+    ADD_FUNC("sqrt", float, float)
+    ADD_FUNC("sin", float, float)
+    ADD_FUNC("cos", float, float)
+    ADD_FUNC("tan", float, float)
+    ADD_FUNC("atan", float, float)
+    ADD_FUNC("exp", float, float)
+    ADD_FUNC("ln", float, float)
+    ADD_FUNC("pi", unit, float)
+    
+    ADD_FUNC("incr", INT_REF, unit)
+    ADD_FUNC("decr", INT_REF, unit)
+    
+    ADD_FUNC("float_of_int", int, float)
+    ADD_FUNC("int_of_float", float, int)
+    ADD_FUNC("round", float, int)
+
+    ADD_FUNC("int_of_char", char, int)
+    ADD_FUNC("char_of_int", int, char)
+
     AST_ltdef_list_traverse(p->list);
     scope_close(symbol_table);
 }
@@ -165,16 +209,17 @@ Scope AST_typedef_traverse(AST_typedef td) {
     if (td == NULL) {
         return NULL;
     }
-    scope = scope_open(symbol_table);
 
-    AST_tdef_list_traverse(td->list);
+    scope = scope_open(type_symbol_table);
+    AST_tdef_list_traverse(td->list, scope);
 
     return scope;
 }
 
-void AST_def_traverse (AST_def d)
-{
+void AST_def_traverse(AST_def d) {
     SymbolEntry entry;
+    int dim_count;
+
     if (d == NULL) {
         /* fprintf(f, "<<NULL>>\n"); */
         return;
@@ -193,34 +238,28 @@ void AST_def_traverse (AST_def d)
             scope_close(symbol_table);
             break;
         case DEF_mutable:
+            dim_count = AST_expr_list_count(d->u.d_mutable.list);
             entry = symbol_enter(symbol_table, d->u.d_mutable.id, 0);
             entry->entry_type = ENTRY_VARIABLE;
-            entry->e.variable.type = d->u.d_mutable.type;
-            /* TODO: uncomment this AST_expr_list_print(f, prec+1, d->u.d_mutable.list); */
+            entry->e.variable.type = ( dim_count == 0 ? d->u.d_mutable.type :
+                    type_array(dim_count, d->u.d_mutable.type) );
             break;
         default:
             internal("invalid AST");
     }
 }
 
-void AST_tdef_traverse(AST_tdef td) {
+void AST_tdef_traverse(AST_tdef td, Scope scope) {
     SymbolEntry entry;
 
     if (td == NULL) {
         return;
     }
-    /* TODO: ap'oti fainetai, epitrepetai to
-     * let x = 2
-     * type x = 3
-     * let mutable y : x
-     *
-     * theloume na exoume kati san diaforetiko symbol table gia typous
-     * kai diaforetiko gia sinartiseis? pros to paron vazoume to prefix __type_
-     * otan vazoume typous sto symbol table
-     */
-    entry = symbol_enter(symbol_table, hash_type_id(td->id), 0);
+
+    entry = symbol_enter(type_symbol_table, td->id, 1);
     entry->entry_type = ENTRY_TYPE;
     entry->e.type.type = type_id(td->id);
+    entry->e.type.scope = scope;
     AST_constr_list_traverse(td->list);
 }
 
@@ -231,7 +270,7 @@ void AST_constr_traverse(AST_constr c) {
         return;
     }
 
-    entry = symbol_enter(symbol_table, c->id, 0);
+    entry = symbol_enter(type_symbol_table, c->id, 1);
     entry->entry_type = ENTRY_CONSTRUCTOR;
     Type_list_traverse(c->list);
 }
@@ -261,32 +300,36 @@ Type AST_expr_traverse (AST_expr e) {
     }
     switch (e->kind) {
         case EXPR_iconst:
-            entry = symbol_enter(symbol_table, to_hash(e), 0);
-            entry->entry_type = ENTRY_CONSTANT;
-            entry->e.constant.type = type_int();
-            entry->e.constant.value.v_int = e->u.e_iconst.rep;
-            return entry->e.constant.type;
+            /* entry = symbol_enter(symbol_table, to_hash(e), 0); */
+            /* entry->entry_type = ENTRY_CONSTANT; */
+            /* entry->e.constant.type = type_int(); */
+            /* entry->e.constant.value.v_int = e->u.e_iconst.rep; */
+            /* return entry->e.constant.type; */
+            return type_int();
 
         case EXPR_fconst:
-            entry = symbol_enter(symbol_table, to_hash(e), 0);
-            entry->entry_type = ENTRY_CONSTANT;
-            entry->e.constant.type = type_float();
-            entry->e.constant.value.v_float = e->u.e_fconst.rep;
-            return entry->e.constant.type;
+            /* entry = symbol_enter(symbol_table, to_hash(e), 0); */
+            /* entry->entry_type = ENTRY_CONSTANT; */
+            /* entry->e.constant.type = type_float(); */
+            /* entry->e.constant.value.v_float = e->u.e_fconst.rep; */
+            /* return entry->e.constant.type; */
+            return type_float();
 
         case EXPR_cconst:
-            entry = symbol_enter(symbol_table, to_hash(e), 0);
-            entry->entry_type = ENTRY_CONSTANT;
-            entry->e.constant.type = type_char();
-            entry->e.constant.value.v_char = e->u.e_cconst.rep;
-            return entry->e.constant.type;
+            /* entry = symbol_enter(symbol_table, to_hash(e), 0); */
+            /* entry->entry_type = ENTRY_CONSTANT; */
+            /* entry->e.constant.type = type_char(); */
+            /* entry->e.constant.value.v_char = e->u.e_cconst.rep; */
+            /* return entry->e.constant.type; */
+            return type_char();
 
         case EXPR_strlit:
-            entry = symbol_enter(symbol_table, to_hash(e), 0);
-            entry->entry_type = ENTRY_CONSTANT;
-            entry->e.constant.type = type_array(1, type_char());
-            entry->e.constant.value.v_strlit = e->u.e_strlit.rep;
-            return entry->e.constant.type;
+            /* entry = symbol_enter(symbol_table, to_hash(e), 0); */
+            /* entry->entry_type = ENTRY_CONSTANT; */
+            /* entry->e.constant.type = type_array(1, type_char()); */
+            /* entry->e.constant.value.v_strlit = e->u.e_strlit.rep; */
+            /* return entry->e.constant.type; */
+            return type_array(1, type_char());
 
         case EXPR_true:
         case EXPR_false:
@@ -304,30 +347,34 @@ Type AST_expr_traverse (AST_expr e) {
             expr2_type = AST_expr_traverse(e->u.e_binop.expr2);
             return AST_binop_traverse(expr1_type, e->u.e_binop.op, expr2_type);
 
-/* Paraitoumai :( Den mporo na katalabo ti prepei na kano me afta :(
         case EXPR_id: 
             entry = symbol_lookup(symbol_table, e->u.e_id.id, LOOKUP_ALL_SCOPES, 1);
-            if ( entry->entry_type != ENTRY_VARIABLE )
-                error("Type mismatch: Identifier %s is not a variable\n", e->u.e_dim.id);
-            if ( entry->e.variable.type->kind != TYPE_array )
-                error("Type mismatch: %s is not an array\n", e->u.e_dim.id);
-            return type_int();
-            
-            Identifier_print(e->u.e_id.id); 
-            
-            break; 
-        case EXPR_Id: 
+
+            switch(entry->entry_type) {
+                case ENTRY_FUNCTION:
+                    /* TODO: na koitame an ontws exei 0 parametrous */
+                    return entry->e.function.result_type;
+                case ENTRY_PARAMETER:
+                    return entry->e.parameter.type;
+                case ENTRY_IDENTIFIER:
+                    return entry->e.identifier.type;
+                case ENTRY_VARIABLE:
+                    return entry->e.variable.type;
+                default:
+                    error("Unknown identifier %s\n", e->u.e_id.id);
+            }
+
+        /*case EXPR_Id: 
             fprintf(f, "ast_expr: Id (\n"); 
             Identifier_print(f, prec+1, e->u.e_Id.id); 
             indent(f, prec); fprintf(f, ")\n"); 
-            break; 
+            break; */
+
         case EXPR_call: 
-             
-            Identifier_print(f, prec+1, e->u.e_call.id); 
-            AST_expr_list_traverse(e->u.e_call.list); 
-             
-            break; 
-        case EXPR_Call: 
+            entry = symbol_lookup(symbol_table, e->u.e_call.id, LOOKUP_ALL_SCOPES, 1);
+            /*TODO: uncomment this AST_expr_list_traverse(e->u.e_call.list); */
+            return entry->e.function.result_type;
+        /*case EXPR_Call: 
              
             Identifier_print(f, prec+1, e->u.e_Call.id); 
             AST_expr_list_traverse(e->u.e_Call.list); 
@@ -338,14 +385,13 @@ Type AST_expr_traverse (AST_expr e) {
             Identifier_print(f, prec+1, e->u.e_arrel.id); 
             AST_expr_list_traverse(e->u.e_arrel.list); 
              
-            break; 
-*/
+            break; */
         case EXPR_dim:
             entry = symbol_lookup(symbol_table, e->u.e_dim.id, LOOKUP_ALL_SCOPES, 1);
             if ( entry->entry_type != ENTRY_VARIABLE )
-                error("Type mismatch: Identifier %s is not a variable\n", e->u.e_dim.id);
+                error("Type mismatch: Identifier %s is not a variable\n", e->u.e_dim.id->name);
             if ( entry->e.variable.type->kind != TYPE_array )
-                error("Type mismatch: %s is not an array\n", e->u.e_dim.id);
+                error("Type mismatch: %s is not an array\n", e->u.e_dim.id->name);
             return type_int();
 
         case EXPR_new:
@@ -365,10 +411,10 @@ Type AST_expr_traverse (AST_expr e) {
             scope_close(symbol_table);
             return result_type;
 
-       case EXPR_if: 
+        case EXPR_if: 
             expr1_type = AST_expr_traverse(e->u.e_if.econd);
-	    if ( expr1_type->kind != TYPE_bool )
-		 error("Type mismatch: Condition is not of type bool\n");
+            if ( expr1_type->kind != TYPE_bool )
+                error("Type mismatch: Condition is not of type bool\n");
             expr2_type = AST_expr_traverse(e->u.e_if.ethen); 
             expr3_type = AST_expr_traverse(e->u.e_if.eelse);       
             if ( expr2_type->kind != expr3_type->kind )
@@ -382,21 +428,28 @@ Type AST_expr_traverse (AST_expr e) {
             return AST_expr_traverse(e->u.e_while.ebody);
 
         case EXPR_for:  
-/*            Identifier_print(f, prec+1, e->u.e_for.id); */ /* TODO: Ti kanoume ton identifier? Add to symbol table? */
+            scope_open(symbol_table);
+            entry = symbol_enter(symbol_table, e->u.e_for.id, 0);
+            entry->entry_type = ENTRY_IDENTIFIER;
+            entry->e.identifier.type = type_int();
             expr1_type = AST_expr_traverse(e->u.e_for.expr1);
             if ( expr1_type->kind != TYPE_int )
                 error("Type mismatch: Start part of 'for' is not of type int\n");             
             expr2_type = AST_expr_traverse(e->u.e_for.expr2); 
             if ( expr2_type->kind != TYPE_int )
                 error("Type mismatch: End part of 'for' is not of type int\n");
-            return AST_expr_traverse(e->u.e_for.ebody); 
-            /* case EXPR_match: */
-            /*     fprintf(f, "ast_expr: match (\n"); */
-            /*     AST_expr_print(f, prec+1, e->u.e_match.expr); */
-            /*     AST_clause_list_print(f, prec+1, e->u.e_match.list); */
-            /*     indent(f, prec); fprintf(f, ")\n"); */
-            /*     break; */             
-            break; 
+            expr3_type = AST_expr_traverse(e->u.e_for.ebody); 
+            if ( expr2_type->kind != TYPE_unit )
+                error("Type mismatch: Expression of 'for' is not of type unit\n");
+            scope_close(symbol_table);
+            return type_unit();
+
+        case EXPR_match:
+            /* TODO: type checking */
+            expr1_type = AST_expr_traverse(e->u.e_match.expr);
+            AST_clause_list_traverse(e->u.e_match.list);
+            return NULL;
+
         default:
             internal("invalid AST");
     }
@@ -404,19 +457,15 @@ Type AST_expr_traverse (AST_expr e) {
     return NULL;
 }
 
-/* void AST_clause_print (FILE * f, int prec, AST_clause c) */
-/* { */
-/*    indent(f, prec); */
-/*    if (c == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "ast_clause (\n"); */
-/*    AST_pattern_print(f, prec+1, c->pattern); */
-/*    AST_expr_print(f, prec+1, c->expr); */
-/*    indent(f, prec); fprintf(f, ")\n"); */
-/* } */
-/*  */
+void AST_clause_traverse(AST_clause c)
+{
+   if (c == NULL) {
+      return;
+   }
+   /* TODO: uncomment this AST_pattern_print(c->pattern); */
+   /*       ... and this AST_expr_print(c->expr); */
+}
+
 /* void AST_pattern_print (FILE * f, int prec, AST_pattern p) */
 /* { */
 /*    indent(f, prec); */
@@ -594,13 +643,13 @@ void AST_def_list_traverse (AST_def_list l)
     AST_def_list_traverse(l->tail);
 }
 
-void AST_tdef_list_traverse(AST_tdef_list l)
+void AST_tdef_list_traverse(AST_tdef_list l, Scope scope)
 {
     if (l == NULL) {
         return;
     }
-    AST_tdef_traverse(l->head);
-    AST_tdef_list_traverse(l->tail);
+    AST_tdef_traverse(l->head, scope);
+    AST_tdef_list_traverse(l->tail, scope);
 }
 
 void AST_constr_list_traverse(AST_constr_list l)
@@ -612,7 +661,7 @@ void AST_constr_list_traverse(AST_constr_list l)
     AST_constr_list_traverse(l->tail);
 }
 
-void AST_par_list_traverse (AST_par_list l)
+void AST_par_list_traverse(AST_par_list l)
 {
     if (l == NULL) {
         /*fprintf(f, "<<NULL>>\n");*/
@@ -620,6 +669,12 @@ void AST_par_list_traverse (AST_par_list l)
     }
     AST_par_traverse(l->head);
     AST_par_list_traverse(l->tail);
+}
+
+int AST_expr_list_count(AST_expr_list l) {
+   if (l == NULL) return 0;
+
+   return 1 + AST_expr_list_count(l->tail);
 }
 
 /* void AST_expr_list_print (FILE * f, int prec, AST_expr_list l) */
@@ -634,20 +689,16 @@ void AST_par_list_traverse (AST_par_list l)
 /*    AST_expr_list_print(f, prec+1, l->tail); */
 /*    indent(f, prec); fprintf(f, ")\n"); */
 /* } */
-/*  */
-/* void AST_clause_list_print (FILE * f, int prec, AST_clause_list l) */
-/* { */
-/*    indent(f, prec); */
-/*    if (l == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    fprintf(f, "ast_clause_list (\n"); */
-/*    AST_clause_print(f, prec+1, l->head); */
-/*    AST_clause_list_print(f, prec+1, l->tail); */
-/*    indent(f, prec); fprintf(f, ")\n"); */
-/* } */
-/*  */
+
+void AST_clause_list_traverse(AST_clause_list l)
+{
+   if (l == NULL) {
+      return;
+   }
+   AST_clause_traverse(l->head);
+   AST_clause_list_traverse(l->tail);
+}
+
 /* void AST_pattern_list_print (FILE * f, int prec, AST_pattern_list l) */
 /* { */
 /*    indent(f, prec); */
@@ -669,8 +720,7 @@ void Type_list_traverse(Type_list l) {
     /* TODO: mipws den epitrepontai kapoioi typoi? (p.x. ref) */
     switch(l->head->kind) {
         case TYPE_id:
-            /* TODO: fix this (currently returns unknown identifier __type_asd) */
-            symbol_lookup(symbol_table, hash_type_id(l->head->u.t_id.id), LOOKUP_ALL_SCOPES, 1);
+            symbol_lookup(type_symbol_table, l->head->u.t_id.id, LOOKUP_ALL_SCOPES, 1);
             break;
 
         default:
