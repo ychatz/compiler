@@ -270,7 +270,7 @@ void AST_def_traverse(AST_def d) {
 
             par_type = AST_par_list_traverse(d->u.d_normal.list);
             if ( par_type == NULL )
-                entry->e.function.type = d->u.d_normal.type;
+                entry->e.function.type = type_func(NULL, d->u.d_normal.type);
             else
                 entry->e.function.type = type_func(par_type, d->u.d_normal.type);
 
@@ -445,7 +445,7 @@ Type AST_expr_traverse(AST_expr e) {
         case EXPR_Call: 
             entry = symbol_lookup(type_symbol_table, e->u.e_Call.id, LOOKUP_ALL_SCOPES, 1);
 
-            if (entry->entry_type != ENTRY_CONSTRUCTOR ) {
+            if ( entry->entry_type != ENTRY_CONSTRUCTOR ) {
                 error("'%s' is not a constructor\n", e->u.e_Call.id->name);
             }
             expr1_type = AST_expr_list_traverse(e->u.e_Call.list); 
