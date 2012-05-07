@@ -173,7 +173,7 @@ void AST_program_traverse(AST_program p) {
     ADD_FUNC("int_of_char", char, int)
     ADD_FUNC("char_of_int", int, char)
 
-    ADD_FUNC("strlen", char, int)
+    ADD_FUNC("strlen", STRING, int)
     add_function("strcmp", type_func(type_STRING(), type_STRING()), type_int());
     add_function("strcpy", type_func(type_STRING(), type_STRING()), type_unit());
     add_function("strcat", type_func(type_STRING(), type_STRING()), type_unit());
