@@ -173,6 +173,11 @@ void AST_program_traverse(AST_program p) {
     ADD_FUNC("int_of_char", char, int)
     ADD_FUNC("char_of_int", int, char)
 
+    ADD_FUNC("strlen", char, int)
+    add_function("strcmp", type_func(type_STRING(), type_STRING()), type_int());
+    add_function("strcpy", type_func(type_STRING(), type_STRING()), type_unit());
+    add_function("strcat", type_func(type_STRING(), type_STRING()), type_unit());
+
     AST_ltdef_list_traverse(p->list);
     scope_close(symbol_table);
 }

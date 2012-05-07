@@ -44,6 +44,6 @@ let main =
 	print_string "\ntimes\n\n";
 	mprint y;
 	print_string "\nmakes\n\n";
-	mmult x y z;
+	mmul x y z;
 	mprint z
 
