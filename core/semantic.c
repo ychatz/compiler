@@ -251,27 +251,38 @@ void AST_def_traverse(AST_def d) {
 
 void AST_tdef_traverse(AST_tdef td, Scope scope) {
     SymbolEntry entry;
+    Type user_type;
 
     if (td == NULL) {
         return;
     }
 
+    user_type = type_id(td->id);
+
     entry = symbol_enter(type_symbol_table, td->id, 1);
     entry->entry_type = ENTRY_TYPE;
-    entry->e.type.type = type_id(td->id);
+    entry->e.type.type = user_type;
     entry->e.type.scope = scope;
-    AST_constr_list_traverse(td->list);
+    AST_constr_list_traverse(td->list, user_type);
 }
 
-void AST_constr_traverse(AST_constr c) {
+void AST_constr_traverse(AST_constr c, Type user_type) {
     SymbolEntry entry;
 
     if (c == NULL) {
         return;
     }
 
+    /* do not allow two types to use the same constructor */
+    entry = symbol_lookup(type_symbol_table, c->id, LOOKUP_ALL_SCOPES, 0);
+    if ( entry != NULL )
+        error("Constructor %s is used more than one times\n",  c->id->name);
+
+    /* do not allow the same constructor to defined twice in a type definition */
     entry = symbol_enter(type_symbol_table, c->id, 1);
+
     entry->entry_type = ENTRY_CONSTRUCTOR;
+    entry->e.constructor.type = user_type;
     Type_list_traverse(c->list);
 }
 
@@ -333,7 +344,7 @@ Type AST_expr_traverse (AST_expr e) {
 
         case EXPR_true:
         case EXPR_false:
-            return type_bool(); /* TODO: add this to symbol table maybe? */
+            return type_bool();
 
         case EXPR_unit:
             return type_unit();
@@ -364,11 +375,14 @@ Type AST_expr_traverse (AST_expr e) {
                     error("Unknown identifier %s\n", e->u.e_id.id);
             }
 
-        /*case EXPR_Id: 
-            fprintf(f, "ast_expr: Id (\n"); 
-            Identifier_print(f, prec+1, e->u.e_Id.id); 
-            indent(f, prec); fprintf(f, ")\n"); 
-            break; */
+        case EXPR_Id: 
+            entry = symbol_lookup(type_symbol_table, e->u.e_Id.id, LOOKUP_ALL_SCOPES, 1);
+
+            if (entry->entry_type != ENTRY_CONSTRUCTOR ) {
+                internal("%s is not a constructor\n", e->u.e_Id.id);
+            }
+
+            return entry->e.constructor.type;
 
         case EXPR_call: 
             entry = symbol_lookup(symbol_table, e->u.e_call.id, LOOKUP_ALL_SCOPES, 1);
@@ -635,30 +649,26 @@ void AST_ltdef_list_traverse (AST_ltdef_list l)
 
 void AST_def_list_traverse (AST_def_list l)
 {
-    if (l == NULL) {
-        /* fprintf(f, "<<NULL>>\n"); */
-        return;
-    }
+    if (l == NULL) return;
+
     AST_def_traverse(l->head);
     AST_def_list_traverse(l->tail);
 }
 
 void AST_tdef_list_traverse(AST_tdef_list l, Scope scope)
 {
-    if (l == NULL) {
-        return;
-    }
+    if (l == NULL) return;
+
     AST_tdef_traverse(l->head, scope);
     AST_tdef_list_traverse(l->tail, scope);
 }
 
-void AST_constr_list_traverse(AST_constr_list l)
+void AST_constr_list_traverse(AST_constr_list l, Type user_type)
 {
-    if (l == NULL) {
-        return;
-    }
-    AST_constr_traverse(l->head);
-    AST_constr_list_traverse(l->tail);
+    if (l == NULL) return;
+
+    AST_constr_traverse(l->head, user_type);
+    AST_constr_list_traverse(l->tail, user_type);
 }
 
 void AST_par_list_traverse(AST_par_list l)

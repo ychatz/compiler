@@ -112,6 +112,10 @@ struct SymbolEntry_tag {
       struct {
           Type type;
       } identifier;
+
+      struct {
+          Type type;
+      } constructor;
    } e;
 };
 

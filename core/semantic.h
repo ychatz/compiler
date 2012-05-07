@@ -40,7 +40,7 @@ Scope AST_letdef_traverse        (AST_letdef);
 Scope AST_typedef_traverse       (AST_typedef);
 void  AST_def_traverse           (AST_def);
 void  AST_tdef_traverse          (AST_tdef, Scope);
-void  AST_constr_traverse        (AST_constr);
+void  AST_constr_traverse        (AST_constr, Type);
 /*    void                       AST_par_traverse (AST_par); */
 Type  AST_expr_traverse          (AST_expr);
 void  AST_clause_traverse        (AST_clause);
@@ -52,7 +52,7 @@ Type  AST_binop_traverse         (Type, AST_binop, Type);
 void  AST_ltdef_list_traverse    (AST_ltdef_list);
 void  AST_def_list_traverse      (AST_def_list);
 void  AST_tdef_list_traverse     (AST_tdef_list, Scope);
-void  AST_constr_list_traverse   (AST_constr_list);
+void  AST_constr_list_traverse   (AST_constr_list, Type);
 void  AST_par_list_traverse      (AST_par_list);
 void  AST_expr_list_traverse     (AST_expr_list);
 void  AST_clause_list_traverse   (AST_clause_list);
