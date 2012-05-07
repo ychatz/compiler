@@ -228,7 +228,9 @@ void AST_def_traverse(AST_def d) {
             scope_open(symbol_table);
 
             par_type = AST_par_list_traverse(d->u.d_normal.list);
-            if ( par_type == NULL )
+            /* warning("SETTING %s\n", d->u.d_normal.id->name);  */
+            /* Type_print(stdout, 0, par_type); */
+            if ( d->u.d_normal.list == NULL )
                 entry->e.function.type = d->u.d_normal.type;
             else
                 entry->e.function.type = type_func(par_type, d->u.d_normal.type);
@@ -388,6 +390,7 @@ Type AST_expr_traverse(AST_expr e) {
             return entry->e.constructor.type;
 
         case EXPR_call: 
+            /* warning("Calling %s...\n", e->u.e_call.id->name); */
             entry = symbol_lookup(symbol_table, e->u.e_call.id, LOOKUP_ALL_SCOPES, 1);
 
             if  ( entry->entry_type != ENTRY_FUNCTION )
@@ -399,6 +402,7 @@ Type AST_expr_traverse(AST_expr e) {
                 error("The types of the arguments of function '%s' do not match the definition\n", e->u.e_call.id->name);
             }
 
+            /* warning("Finished %s...\n", e->u.e_call.id->name); */
             return entry->e.function.result_type;
 
         case EXPR_Call: 
@@ -490,7 +494,7 @@ Type AST_expr_traverse(AST_expr e) {
             if ( expr2_type->kind != TYPE_int )
                 error("Type mismatch: End part of 'for' is not of type int\n");
             expr3_type = AST_expr_traverse(e->u.e_for.ebody); 
-            if ( !type_eq(expr2_type, type_unit()) )
+            if ( !type_eq(expr3_type, type_unit()) )
                 error("Type mismatch: Expression of 'for' is not of type unit\n");
             scope_close(symbol_table);
             return type_unit();
