@@ -1,33 +1,78 @@
-CFLAGS = -g -Wall
-CC = gcc
-ECHO = /bin/echo
+.SUFFIXES:
+.SUFFIXES: .l .y .c .o
+.PHONY: clean distclean
 
-llama: core/lexer.o core/main.c core/parser.o
-	$(CC) $(CFLAGS) -o $@ $^ -lfl
+# OS type: Linux/Win DJGPP
+ifdef OS
+   EXE=.exe
+else
+   EXE=
+endif
 
-core/parser.o core/parser.h: core/parser.c
+# programs
+CC=gcc
+#CC=gcc-3.0
+LEX=flex
+YACC=bison
 
-core/parser.c: core/parser.y
-	bison -d -v -o $@ $<
+# options
+CFLAGS=-Wall -ansi -g -DCHECK_ASSERT
+LDFLAGS=-lfl
+ifndef LFLAGS
+   LFLAGS=-s
+endif
+ifndef YFLAGS
+   YFLAGS=-dtv
+endif
 
-core/lexer.o: core/lexer.c
+# files
+CFILES   = error.c general.c symbol.c types.c ast.c pretty.c semantic.c
+HFILES   = error.h general.h symbol.h types.h ast.h pretty.h semantic.h
+OBJFILES = $(patsubst %.c,%.o,$(CFILES)) parser.o lexer.o main.o
+TMPFILES = parser.h parser.c lexer.c parser.output lexer.h
+EXEFILES = llama$(EXE)
 
-core/lexer.c: core/lexer.l core/parser.h
-	flex -s --header-file=core/lexer.h -o $@ $<
+SRCFILES = $(HFILES) $(CFILES)
 
+#
+# Generic rules
+#
 
-test: core/lexer.o core/parser.o tests/main.c tests/helpers.c tests/lexer.c tests/parser.c
-	@$(ECHO) "* Compiling..."
-	@$(CC) $(CFLAGS) -o llama-test $^ -lfl
-	@./llama-test
-	@$(RM) ./llama-test
+%.c %.h: %.l
+	$(LEX) $(LFLAGS) --header-file=lexer.h -olexer.c $<
 
-.PHONY: test clean distclean
+%.c %.h: %.y
+	$(YACC) $(YFLAGS) -o $@ $<
+
+%.o : %.c
+	$(CC) $(CFLAGS) -c $<
+
+#
+# Specific rules and dependencies
+#
+	
+all: $(EXEFILES)
+
+llama$(EXE): $(OBJFILES)
+	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+
+lexer.o: lexer.c parser.h
+parser.o: parser.c parser.h lexer.h ast.h
+
+general.o  : general.c general.h error.h
+error.o    : error.c general.h error.h
+symbol.o   : symbol.c symbol.h general.h error.h types.h
+types.o    : types.c types.h general.h error.h
+ast.o      : ast.c ast.h general.h types.h
+pretty.o   : pretty.c pretty.h general.h types.h ast.h
+semantic.o : semantic.c semantic.h ast.h error.h symbol.h general.h
+main.o     : main.c llama.h parser.h ast.h semantic.h
 
 clean:
-	$(RM) core/lexer.c core/*.o test/*.o
-	$(RM) core/lexer.c core/lexer.h
-	$(RM) core/parser.c core/parser.h core/parser.output
+	$(RM) $(OBJFILES) $(TMPFILES) *~
 
 distclean: clean
-	$(RM) llama
+	$(RM) $(EXEFILES)
+
+count:
+	wc -l -c Makefile $(SRCFILES)
