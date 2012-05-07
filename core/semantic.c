@@ -286,7 +286,8 @@ void AST_def_traverse(AST_def d) {
             dim_count = AST_expr_list_count(d->u.d_mutable.list);
             entry = symbol_enter(symbol_table, d->u.d_mutable.id, 0);
             entry->entry_type = ENTRY_VARIABLE;
-            entry->e.variable.type = ( dim_count == 0 ? d->u.d_mutable.type :
+            entry->e.variable.type = ( dim_count == 0 ?
+                    type_ref(d->u.d_mutable.type) :
                     type_array(dim_count, d->u.d_mutable.type) );
             break;
         default:
