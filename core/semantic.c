@@ -70,7 +70,7 @@ void add_function(const char *name, Type parameter_type, Type result_type ) {
     entry = symbol_enter(symbol_table, id_make(name), 0);
     entry->entry_type = ENTRY_FUNCTION;
     entry->e.function.result_type = result_type;
-    /* TODO: add parameter */
+    entry->e.function.type = type_func(parameter_type, result_type);
 }
 
 Type unify(Type first_type, Type second_type, bool err) {
