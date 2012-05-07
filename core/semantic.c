@@ -115,57 +115,6 @@ bool type_eq(Type a, Type b) {
    ---- Implementation of functions required by the abstract syntax ----
    --------------------------------------------------------------------- */
 
-/* void Type_print (FILE * f, int prec, Type type) */
-/* { */
-/*    indent(f, prec); */
-/*    if (type == NULL) { */
-/*       fprintf(f, "<<NULL>>\n"); */
-/*       return; */
-/*    } */
-/*    switch (type->kind) { */
-/*       case TYPE_unit: */
-/*          fprintf(f, "Type: unit\n"); */
-/*          break; */
-/*       case TYPE_bool: */
-/*          fprintf(f, "Type: bool\n"); */
-/*          break; */
-/*       case TYPE_char: */
-/*          fprintf(f, "Type: char\n"); */
-/*          break; */
-/*       case TYPE_int: */
-/*          fprintf(f, "Type: int\n"); */
-/*          break; */
-/*       case TYPE_float: */
-/*          fprintf(f, "Type: float\n"); */
-/*          break; */
-/*       case TYPE_array: */
-/*          fprintf(f, "Type: array (\n"); */
-/*          indent(f, prec+1); */
-/*          fprintf(f, "dim = %d\n", type->u.t_array.dim); */
-/*          Type_print(f, prec+1, type->u.t_array.type); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case TYPE_ref: */
-/*          fprintf(f, "Type: ref (\n"); */
-/*          Type_print(f, prec+1, type->u.t_ref.type); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case TYPE_func: */
-/*          fprintf(f, "Type: func (\n"); */
-/*          Type_print(f, prec+1, type->u.t_func.type1); */
-/*          Type_print(f, prec+1, type->u.t_func.type2); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       case TYPE_id: */
-/*          fprintf(f, "Type: id (\n"); */
-/*          Identifier_print(f, prec+1, type->u.t_id.id); */
-/*          indent(f, prec); fprintf(f, ")\n"); */
-/*          break; */
-/*       default: */
-/*          internal("invalid AST"); */
-/*    } */
-/* } */
-
 void AST_program_traverse(AST_program p) {
     if (p == NULL) {
         return;
@@ -451,7 +400,6 @@ Type AST_expr_traverse(AST_expr e) {
             expr1_type = AST_expr_list_traverse(e->u.e_Call.list); 
             if ( !type_eq(expr1_type, entry->e.constructor.argument_type) ) {
                 error("The types of the arguments of the constructor '%s' do not match the definition\n", e->u.e_Call.id->name);
-                Type_print(stdout, 0, entry->e.function.type);
             }
 
             return entry->e.constructor.type;
@@ -744,9 +692,10 @@ Type AST_par_list_traverse(AST_par_list l)
     temp = AST_par_traverse(l->head);
     temp2 = AST_par_list_traverse(l->tail);
 
-    if ( temp == NULL ) return NULL;
-    if ( temp2 == NULL ) return temp;
-    return type_func(temp, temp2);
+    if ( l->tail != NULL )
+        return type_func(temp, temp2);
+    else
+        return temp;
 }
 
 int AST_expr_list_count(AST_expr_list l) {
@@ -763,8 +712,10 @@ Type AST_expr_list_traverse(AST_expr_list l) {
     temp = AST_expr_traverse(l->head);
     temp2 =AST_expr_list_traverse(l->tail);
 
-    if ( temp2 == NULL ) return temp;
-    return type_func(temp, temp2);
+    if ( l->tail != NULL )
+        return type_func(temp, temp2);
+    else
+        return temp;
 }
 
 void AST_clause_list_traverse(AST_clause_list l, Type type)
