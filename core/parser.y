@@ -3,7 +3,7 @@
 #include "ast.h"
 #include "lexer.h"
 #include "llama.h"
- 
+
 void yyerror (const char * msg);
 extern int lineno;
 AST_program ast;
@@ -172,160 +172,160 @@ let_definition: "let" many_definitions                  { $$ = ast_letdef(false,
               | "let" "rec" many_definitions            { $$ = ast_letdef(true, $3); }
 ;
 
-many_definitions: definition                            { $$ = ast_def_list ($1, NULL); } 
-                | definition "and" many_definitions 	{ $$ = ast_def_list($1, $3); }
-; 
+many_definitions: definition                            { $$ = ast_def_list ($1, NULL); }
+                | definition "and" many_definitions     { $$ = ast_def_list($1, $3); }
+;
 
 definition: "id" parameter_list '=' expr                { $$ = ast_def_normal($1, $2, NULL, $4); }
           | "id" parameter_list ':' type '=' expr       { $$ = ast_def_normal($1, $2, $4, $6); }
           | "mutable" "id"                              { $$ = ast_def_mutable($2, NULL, NULL); }
           | "mutable" "id" ':' type                     { $$ = ast_def_mutable($2, NULL, $4); }
           | "mutable" "id" '[' multi_expr ']'           { $$ = ast_def_mutable($2, $4, NULL); }
-          | "mutable" "id" '[' multi_expr ']' ':' type 	{ $$ = ast_def_mutable($2, $4, $7); }
+          | "mutable" "id" '[' multi_expr ']' ':' type  { $$ = ast_def_mutable($2, $4, $7); }
 ;
 
-parameter_list: 
-              /* nothing */                 { $$ = NULL; }
-              | parameter parameter_list    { $$ = ast_par_list($1, $2); }
+parameter_list:
+              /* nothing */                             { $$ = NULL; }
+              | parameter parameter_list                { $$ = ast_par_list($1, $2); }
 ;
 
-parameter: "id" 			{ $$ = ast_par($1, NULL); }
-         | '(' "id" ':' type ')' 	{ $$ = ast_par($2, $4); }
+parameter: "id"                                         { $$ = ast_par($1, NULL); }
+         | '(' "id" ':' type ')'                        { $$ = ast_par($2, $4); }
 ;
 
-multi_expr: expr 			{ $$ = ast_expr_list( $1, NULL); }
-          | expr ',' multi_expr  	{ $$ = ast_expr_list ($1, $3); }  
+multi_expr: expr                                        { $$ = ast_expr_list( $1, NULL); }
+          | expr ',' multi_expr                         { $$ = ast_expr_list($1, $3); }
 ;
 
-type_definition: "type" many_type_definitions 		{ $$ = ast_typedef($2); }
+type_definition: "type" many_type_definitions           { $$ = ast_typedef($2); }
 ;
 
-many_type_definitions: t_definition 					{ $$ = ast_tdef_list ($1, NULL); } 		
-                     | t_definition "and" many_type_definitions 	{ $$ = ast_tdef_list ($1, $3); } 
+many_type_definitions: t_definition                               { $$ = ast_tdef_list($1, NULL); }
+                     | t_definition "and" many_type_definitions   { $$ = ast_tdef_list($1, $3); }
 ;
 
-t_definition: "id" '=' constr_list 			{ $$ = ast_tdef($1, $3); }
+t_definition: "id" '=' constr_list                      { $$ = ast_tdef($1, $3); }
 ;
 
-constr_list: constructor 				{ $$ = ast_constr_list($1, NULL); }
-           | constructor '|' constr_list 		{ $$ = ast_constr_list($1, $3); }
+constr_list: constructor                                { $$ = ast_constr_list($1, NULL); }
+           | constructor '|' constr_list                { $$ = ast_constr_list($1, $3); }
 ;
 
-constructor: "constructor"  				{ $$ = ast_constr ($1, NULL); }
-           | "constructor" "of" many_types    		{ $$ = ast_constr ($1, $3); }
+constructor: "constructor"                              { $$ = ast_constr($1, NULL); }
+           | "constructor" "of" many_types              { $$ = ast_constr($1, $3); }
 ;
 
-many_types: type			{ $$ = type_list ($1, NULL); }	
-          | type many_types		{ $$ = type_list ($1, $2); }
+many_types: type                                        { $$ = type_list($1, NULL); }
+          | type many_types                             { $$ = type_list($1, $2); }
 ;
 
-type: "unit" 						{ $$ = type_unit(); }
-    | "int"						{ $$ = type_int(); }
-    | "char"						{ $$ = type_char(); }
-    | "bool"						{ $$ = type_bool(); }
-    | "float"						{ $$ = type_float(); }
-    | '(' type ')'					{ $$ = $2; }
-    | type "ref"					{ $$ = type_ref($1); }
-    | type "->" type					{ $$ = type_func($1, $3); }
-    | "array" '[' multi_asterisks ']' "of" type		{ $$ = type_array($3, $6); } 
-    | "array" "of" type					{ $$ = type_array(0, $3); }
-    | "id"						{ $$ = type_id($1); }
+type: "unit"                                            { $$ = type_unit(); }
+    | "int"                                             { $$ = type_int(); }
+    | "char"                                            { $$ = type_char(); }
+    | "bool"                                            { $$ = type_bool(); }
+    | "float"                                           { $$ = type_float(); }
+    | '(' type ')'                                      { $$ = $2; }
+    | type "ref"                                        { $$ = type_ref($1); }
+    | type "->" type                                    { $$ = type_func($1, $3); }
+    | "array" '[' multi_asterisks ']' "of" type         { $$ = type_array($3, $6); }
+    | "array" "of" type                                 { $$ = type_array(0, $3); }
+    | "id"                                              { $$ = type_id($1); }
 ;
 
-multi_asterisks: '*' 					{ $$ = 1; }
-               | '*' ',' multi_asterisks 		{ $$ = 1 + $3; }
+multi_asterisks: '*'                                    { $$ = 1; }
+               | '*' ',' multi_asterisks                { $$ = 1 + $3; }
 ;
 
-clause_list: clause  				{ $$ = ast_clause_list ($1, NULL); } 
-           | clause '|' clause_list 		{ $$ = ast_clause_list ($1, $3); }
+clause_list: clause                                     { $$ = ast_clause_list ($1, NULL); }
+           | clause '|' clause_list                     { $$ = ast_clause_list ($1, $3); }
 ;
 
-clause: pattern "->" expr 			{ $$ = ast_clause ($1, $3); }
+clause: pattern "->" expr                               { $$ = ast_clause ($1, $3); }
 ;
 
-pattern_high: '+' "int_const" %prec INT_POS_SIGN	 	{ $$ = ast_pattern_iconst($2); }
-            | '-' "int_const" %prec INT_NEG_SIGN 		{ $$ = ast_pattern_iconst($2); }
-            | "int_const" 					{ $$ = ast_pattern_iconst($1); }
-            | "+." "float_const" %prec FLOAT_POS_SIGN 		{ $$ = ast_pattern_fconst($2); }
-            | "-." "float_const" %prec FLOAT_NEG_SIGN 		{ $$ = ast_pattern_fconst($2); }
-            | "float_const" 					{ $$ = ast_pattern_fconst($1); }
-            | "char_const" 					{ $$ = ast_pattern_cconst($1); }
-            | "true" 						{ $$ = ast_pattern_true(); }
-            | "false" 						{ $$ = ast_pattern_false(); }
-            | "id" 						{ $$ = ast_pattern_id($1); } 
-            | '(' pattern ')' 					{ $$ = $2; } 
+pattern_high: '+' "int_const" %prec INT_POS_SIGN        { $$ = ast_pattern_iconst($2); }
+            | '-' "int_const" %prec INT_NEG_SIGN        { $$ = ast_pattern_iconst($2); }
+            | "int_const"                               { $$ = ast_pattern_iconst($1); }
+            | "+." "float_const" %prec FLOAT_POS_SIGN   { $$ = ast_pattern_fconst($2); }
+            | "-." "float_const" %prec FLOAT_NEG_SIGN   { $$ = ast_pattern_fconst($2); }
+            | "float_const"                             { $$ = ast_pattern_fconst($1); }
+            | "char_const"                              { $$ = ast_pattern_cconst($1); }
+            | "true"                                    { $$ = ast_pattern_true(); }
+            | "false"                                   { $$ = ast_pattern_false(); }
+            | "id"                                      { $$ = ast_pattern_id($1); }
+            | '(' pattern ')'                           { $$ = $2; }
 ;
 
-pattern: pattern_high                       { $$ = $1; }
-       | "constructor" many_patterns_high 	{ $$ = ast_pattern_Id($1, $2); }
+pattern: pattern_high                                   { $$ = $1; }
+       | "constructor" many_patterns_high               { $$ = ast_pattern_Id($1, $2); }
 ;
 
 many_patterns_high:
-		          /* nothing */                         { $$ = NULL; } 
-                  | pattern_high many_patterns_high 	{ $$ = ast_pattern_list($1, $2); }
+                  /* nothing */                         { $$ = NULL; }
+                  | pattern_high many_patterns_high     { $$ = ast_pattern_list($1, $2); }
 ;
 
 /* http://moodle.softlab.ntua.gr/mod/forum/discuss.php?d=320 */
-many_expr_high: expr_high  			{ $$ = ast_expr_list($1, NULL); } 
-              | expr_high many_expr_high 	{ $$ = ast_expr_list($1, $2); } 
+many_expr_high: expr_high                               { $$ = ast_expr_list($1, NULL); }
+              | expr_high many_expr_high                { $$ = ast_expr_list($1, $2); }
 ;
 
-expr_high: '!' expr_high		{ $$ = ast_expr_unop (ast_unop_exclam, $2); } 
-         | '(' expr ')'			{ $$ = $2; }
-         | '(' ')' 			{ $$ = ast_expr_unit (); }
-         | "int_const" 			{ $$ = ast_expr_iconst($1); }
-         | "float_const" 		{ $$ = ast_expr_fconst($1); }
-         | "char_const" 		{ $$ = ast_expr_cconst($1); }
-         | "string_const" 		{ $$ = ast_expr_strlit($1); }
-         | "true" 			{ $$ = ast_expr_true(); }
-         | "false" 			{ $$ = ast_expr_false(); }
-         | "id" 			{ $$ = ast_expr_id($1); }
-         | "id" '[' multi_expr ']' 	{ $$ = ast_expr_arrel ($1, $3); } 
-         | "constructor" 		{ $$ = ast_expr_Id($1); }
+expr_high: '!' expr_high                                { $$ = ast_expr_unop (ast_unop_exclam, $2); }
+         | '(' expr ')'                                 { $$ = $2; }
+         | '(' ')'                                      { $$ = ast_expr_unit (); }
+         | "int_const"                                  { $$ = ast_expr_iconst($1); }
+         | "float_const"                                { $$ = ast_expr_fconst($1); }
+         | "char_const"                                 { $$ = ast_expr_cconst($1); }
+         | "string_const"                               { $$ = ast_expr_strlit($1); }
+         | "true"                                       { $$ = ast_expr_true(); }
+         | "false"                                      { $$ = ast_expr_false(); }
+         | "id"                                         { $$ = ast_expr_id($1); }
+         | "id" '[' multi_expr ']'                      { $$ = ast_expr_arrel ($1, $3); }
+         | "constructor"                                { $$ = ast_expr_Id($1); }
 ;
 
-expr: "not" expr   				{ $$ = ast_expr_unop (ast_unop_not, $2); } 
-    | '+' expr %prec INT_POS_SIGN		{ $$ = ast_expr_unop (ast_unop_plus, $2); } 
-    | '-' expr %prec INT_NEG_SIGN		{ $$ = ast_expr_unop (ast_unop_minus, $2); } 
-    | "+." expr %prec FLOAT_POS_SIGN		{ $$ = ast_expr_unop (ast_unop_fplus, $2); } 
-    | "-." expr %prec FLOAT_NEG_SIGN		{ $$ = ast_expr_unop (ast_unop_fminus, $2); } 
-    | expr '+' expr 				{ $$ = ast_expr_binop($1, ast_binop_plus, $3); }
-    | expr '-' expr 				{ $$ = ast_expr_binop($1, ast_binop_minus, $3); }
-    | expr '*' expr 				{ $$ = ast_expr_binop($1, ast_binop_times, $3); }
-    | expr '/' expr 				{ $$ = ast_expr_binop($1, ast_binop_div, $3); }
-    | expr "mod" expr 				{ $$ = ast_expr_binop($1, ast_binop_mod, $3); }
-    | expr "+." expr 				{ $$ = ast_expr_binop($1, ast_binop_fplus, $3); }
-    | expr "-." expr 				{ $$ = ast_expr_binop($1, ast_binop_fminus, $3); }
-    | expr "*." expr 				{ $$ = ast_expr_binop($1, ast_binop_ftimes, $3); }
-    | expr "/." expr 				{ $$ = ast_expr_binop($1, ast_binop_fdiv, $3); }
-    | expr "**" expr 				{ $$ = ast_expr_binop($1, ast_binop_exp, $3); }
-    | expr '=' expr 				{ $$ = ast_expr_binop($1, ast_binop_eq, $3); }
-    | expr "<>" expr 				{ $$ = ast_expr_binop($1, ast_binop_ne, $3); }
-    | expr '<' expr 				{ $$ = ast_expr_binop($1, ast_binop_lt, $3); }
-    | expr '>' expr 				{ $$ = ast_expr_binop($1, ast_binop_gt, $3); }
-    | expr "<=" expr 				{ $$ = ast_expr_binop($1, ast_binop_le, $3); }
-    | expr ">=" expr 				{ $$ = ast_expr_binop($1, ast_binop_ge, $3); }
-    | expr "==" expr 				{ $$ = ast_expr_binop($1, ast_binop_pheq, $3); }
-    | expr "!=" expr 				{ $$ = ast_expr_binop($1, ast_binop_phne, $3); }
-    | expr "&&" expr 				{ $$ = ast_expr_binop($1, ast_binop_and, $3); }
-    | expr "||" expr 				{ $$ = ast_expr_binop($1, ast_binop_or, $3); }
-    | expr ":=" expr 				{ $$ = ast_expr_binop($1, ast_binop_assign, $3); }
-    | expr ';' expr 				{ $$ = ast_expr_binop($1, ast_binop_semicolon, $3); }
-    | let_definition "in" expr 						{ $$ = ast_expr_let($1, $3); }
-    | "while" expr "do" expr "done" 					{ $$ = ast_expr_while($2, $4); }
-    | "for" "id" '=' expr "to" expr "do" expr "done" 			{ $$ = ast_expr_for ($2, $4, false, $6, $8); } 
-    | "for" "id" '=' expr "downto" expr "do" expr "done" 		{ $$ = ast_expr_for ($2, $4, true, $6, $8); } 
-    | "dim" "id" 							{ $$ =  ast_expr_dim (0, $2); } 
-    | "dim" "int_const" "id" 						{ $$ =  ast_expr_dim ($2, $3); } 
-    | "new" type 							{ $$ = ast_expr_new($2); }
-    | "delete" expr 							{ $$ = ast_expr_delete($2); }
-    | "id" many_expr_high 						{ $$ = ast_expr_call ($1, $2); }	
-    | "constructor" many_expr_high					{ $$ = ast_expr_Call ($1, $2); }
-    | "if" expr "then" expr 						{ $$ = ast_expr_if ($2, $4, NULL); }
-    | "if" expr "then" expr "else" expr 				{ $$ = ast_expr_if ($2, $4, $6); }
-    | "begin" expr "end"						{ $$ = $2; }
-    | "match" expr "with" clause_list "end" 				{ $$ = ast_expr_match ($2, $4); }
-    | expr_high 							{ $$ = $1; }
+expr: "not" expr                                        { $$ = ast_expr_unop (ast_unop_not, $2); }
+    | '+' expr %prec INT_POS_SIGN                       { $$ = ast_expr_unop (ast_unop_plus, $2); }
+    | '-' expr %prec INT_NEG_SIGN                       { $$ = ast_expr_unop (ast_unop_minus, $2); }
+    | "+." expr %prec FLOAT_POS_SIGN                    { $$ = ast_expr_unop (ast_unop_fplus, $2); }
+    | "-." expr %prec FLOAT_NEG_SIGN                    { $$ = ast_expr_unop (ast_unop_fminus, $2); }
+    | expr '+' expr                                     { $$ = ast_expr_binop($1, ast_binop_plus, $3); }
+    | expr '-' expr                                     { $$ = ast_expr_binop($1, ast_binop_minus, $3); }
+    | expr '*' expr                                     { $$ = ast_expr_binop($1, ast_binop_times, $3); }
+    | expr '/' expr                                     { $$ = ast_expr_binop($1, ast_binop_div, $3); }
+    | expr "mod" expr                                   { $$ = ast_expr_binop($1, ast_binop_mod, $3); }
+    | expr "+." expr                                    { $$ = ast_expr_binop($1, ast_binop_fplus, $3); }
+    | expr "-." expr                                    { $$ = ast_expr_binop($1, ast_binop_fminus, $3); }
+    | expr "*." expr                                    { $$ = ast_expr_binop($1, ast_binop_ftimes, $3); }
+    | expr "/." expr                                    { $$ = ast_expr_binop($1, ast_binop_fdiv, $3); }
+    | expr "**" expr                                    { $$ = ast_expr_binop($1, ast_binop_exp, $3); }
+    | expr '=' expr                                     { $$ = ast_expr_binop($1, ast_binop_eq, $3); }
+    | expr "<>" expr                                    { $$ = ast_expr_binop($1, ast_binop_ne, $3); }
+    | expr '<' expr                                     { $$ = ast_expr_binop($1, ast_binop_lt, $3); }
+    | expr '>' expr                                     { $$ = ast_expr_binop($1, ast_binop_gt, $3); }
+    | expr "<=" expr                                    { $$ = ast_expr_binop($1, ast_binop_le, $3); }
+    | expr ">=" expr                                    { $$ = ast_expr_binop($1, ast_binop_ge, $3); }
+    | expr "==" expr                                    { $$ = ast_expr_binop($1, ast_binop_pheq, $3); }
+    | expr "!=" expr                                    { $$ = ast_expr_binop($1, ast_binop_phne, $3); }
+    | expr "&&" expr                                    { $$ = ast_expr_binop($1, ast_binop_and, $3); }
+    | expr "||" expr                                    { $$ = ast_expr_binop($1, ast_binop_or, $3); }
+    | expr ":=" expr                                    { $$ = ast_expr_binop($1, ast_binop_assign, $3); }
+    | expr ';' expr                                     { $$ = ast_expr_binop($1, ast_binop_semicolon, $3); }
+    | let_definition "in" expr                          { $$ = ast_expr_let($1, $3); }
+    | "while" expr "do" expr "done"                     { $$ = ast_expr_while($2, $4); }
+    | "for" "id" '=' expr "to" expr "do" expr "done"    { $$ = ast_expr_for ($2, $4, false, $6, $8); }
+    | "for" "id" '=' expr "downto" expr "do" expr "done" { $$ = ast_expr_for ($2, $4, true, $6, $8); }
+    | "dim" "id"                                        { $$ =  ast_expr_dim (0, $2); }
+    | "dim" "int_const" "id"                            { $$ =  ast_expr_dim ($2, $3); }
+    | "new" type                                        { $$ = ast_expr_new($2); }
+    | "delete" expr                                     { $$ = ast_expr_delete($2); }
+    | "id" many_expr_high                               { $$ = ast_expr_call ($1, $2); }
+    | "constructor" many_expr_high                      { $$ = ast_expr_Call ($1, $2); }
+    | "if" expr "then" expr                             { $$ = ast_expr_if ($2, $4, NULL); }
+    | "if" expr "then" expr "else" expr                 { $$ = ast_expr_if ($2, $4, $6); }
+    | "begin" expr "end"                                { $$ = $2; }
+    | "match" expr "with" clause_list "end"             { $$ = ast_expr_match ($2, $4); }
+    | expr_high                                         { $$ = $1; }
 ;
 
 %%

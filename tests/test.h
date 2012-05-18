@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include "../core/llama.h"
+#include "../core/ast.h"
 #include "../core/lexer.h"
 #include "../core/parser.h"
-#include "../core/llama.h"
 
 #include "helpers.h"
 
@@ -16,6 +16,7 @@
 } while(0);
 
 extern int lineno;
+extern AST_program ast;
 
 void assert_failed(const char *, const char *, const char *, const int);
 

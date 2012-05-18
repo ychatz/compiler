@@ -25,6 +25,7 @@ void assert_failed(const char *func, const char *cond, const char *file,
 int main(void) {
     lexer_run_tests();
     parser_run_tests();
+    semantic_run_tests();
 
     printf("* The tests finished successfully!\n");
     return 0;
