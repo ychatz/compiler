@@ -344,6 +344,7 @@ Type AST_expr_traverse(AST_expr e) {
         case EXPR_binop:
             expr1_type = AST_expr_traverse(e->u.e_binop.expr1);
             expr2_type = AST_expr_traverse(e->u.e_binop.expr2);
+
             return AST_binop_traverse(expr1_type, e->u.e_binop.op, expr2_type);
 
         case EXPR_id: 

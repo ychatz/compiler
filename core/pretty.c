@@ -71,7 +71,7 @@ void Type_print (FILE * f, int prec, Type type)
          fprintf(f, "Type: char\n");
          break;
       case TYPE_int:
-         fprintf(f, "Type: int\n");
+         fprintf(f, "Type: int");
          break;
       case TYPE_float:
          fprintf(f, "Type: float\n");

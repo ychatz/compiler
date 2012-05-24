@@ -14,10 +14,12 @@
 #include "parser.h"
 #include "pretty.h"
 #include "semantic.h"
+#include "quad.h"
 
 extern int lineno;
 extern AST_program ast;
 extern FILE *yyin;
+extern Quad_list q;
 
 int ERROR (const char msg []) {
     fprintf(stderr, "ERROR, line %d: %s\n", lineno, msg);
@@ -43,15 +45,13 @@ int main (int argc, char **argv) {
         yyin = stdin;
     }
 
+    /* lexical and syntax analysis */
     yyparse();
-    /* AST_program_print(stdout, 0, ast); */
+    /* semantic analysis */
     AST_program_traverse(ast);
-
-    /* int token; */
-    /* do { */
-    /*     token = yylex(); */
-    /*     printf("token=%d, lexeme=\"%s\"\n", token, yytext); */
-    /* } while (token != T_eof); */
+    /* quad generation */
+    AST_program_quad_generate(ast);
+    quad_list_print(stdout, q);
 
     return 0;
 }

@@ -26,8 +26,8 @@ ifndef YFLAGS
 endif
 
 # files
-CFILES   = error.c general.c symbol.c types.c ast.c pretty.c semantic.c
-HFILES   = error.h general.h symbol.h types.h ast.h pretty.h semantic.h
+CFILES   = error.c general.c symbol.c types.c ast.c pretty.c semantic.c quad.c quadgen.c
+HFILES   = error.h general.h symbol.h types.h ast.h pretty.h semantic.h quad.h quadgen.h
 OBJFILES = $(patsubst %.c,%.o,$(CFILES)) parser.o lexer.o main.o
 TMPFILES = parser.h parser.c lexer.c parser.output lexer.h
 EXEFILES = llama$(EXE)
@@ -66,7 +66,8 @@ types.o      : types.c types.h general.h error.h
 ast.o        : ast.c ast.h general.h types.h
 pretty.o     : pretty.c pretty.h general.h types.h ast.h error.h
 semantic.o   : semantic.c semantic.h ast.h error.h symbol.h general.h pretty.h
-main.o       : main.c llama.h parser.h ast.h semantic.h lexer.h pretty.h
+quadgen.o    : quadgen.c quadgen.h ast.h error.h symbol.h general.h pretty.h
+main.o       : main.c llama.h parser.h ast.h semantic.h lexer.h pretty.h quad.h
 
 clean:
 	$(RM) $(OBJFILES) $(TMPFILES) *~
