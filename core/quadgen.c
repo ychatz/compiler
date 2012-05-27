@@ -479,8 +479,8 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_plus, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_plus, operand1, operand2, result);
+
             return result;
 
         case ast_binop_minus:
@@ -489,8 +489,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_minus, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_minus, operand1, operand2, result);
             return result;
         
         case ast_binop_times:
@@ -499,19 +498,16 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_times, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_times, operand1, operand2, result);
             return result;
 
- 
         case ast_binop_div:
             res.num = ++global_count;
             res.typ = type_int();
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_div, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_div, operand1, operand2, result)
             return result;
 
 
@@ -520,9 +516,8 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.typ = type_int();
             res.offset = 0;
 
-            result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_mod, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            result = quad_operand_simple(quad_temporary(res);
+            quad_append_new(quad_opcode_mod, operand1, operand2, result);
             return result;
 
         case ast_binop_fplus:
@@ -531,8 +526,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_plus, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_plus, operand1, operand2, result);
             return result;
 
         case ast_binop_fminus:
@@ -541,8 +535,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_minus, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_minus, operand1, operand2, result);
             return result;
 
         case ast_binop_ftimes:
@@ -551,8 +544,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_times, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_times, operand1, operand2, result);
             return result;
 
         case ast_binop_fdiv:
@@ -561,8 +553,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_div, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_div, operand1, operand2, result);
             return result;    
 
         case ast_binop_exp:
@@ -571,8 +562,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_exp, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_exp, operand1, operand2, result);
             return result;
 
         case ast_binop_lt:
@@ -581,8 +571,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_lt, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_lt, operand1, operand2, result);
             return result; 
 
         case ast_binop_gt:
@@ -591,8 +580,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_gt, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_gt, operand1, operand2, result);
             return result;
 
         case ast_binop_le:
@@ -601,8 +589,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_le, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_le, operand1, operand2, result);
             return result; 
 
         case ast_binop_ge:
@@ -611,8 +598,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_ge, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_ge, operand1, operand2, result);
             return result; 
 
         case ast_binop_eq:
@@ -621,8 +607,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_eq, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_eq, operand1, operand2, result);
             return result;
 
         case ast_binop_ne:
@@ -631,8 +616,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_ne, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_ne, operand1, operand2, result);
             return result; 
 
         case ast_binop_pheq:
@@ -641,8 +625,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_eqeq, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_eqeq, operand1, operand2, result);
             return result; 
 
         case ast_binop_phne:
@@ -651,8 +634,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_nxeq, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_nxeq, operand1, operand2, result);
             return result; 
 
         case ast_binop_and:
@@ -661,8 +643,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_and, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_and, operand1, operand2, result);
             return result; 
 
         case ast_binop_or:
@@ -671,8 +652,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_or, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_or, operand1, operand2, result);
             return result; 
 
         case ast_binop_semicolon:     /* TODO */
@@ -681,8 +661,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_div, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_div, operand1, operand2, result);
             return result; 
 
         case ast_binop_assign:
@@ -691,8 +670,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            newquad = quad(1, quad_opcode_assign, operand1, operand2, result);
-            q = quad_list(newquad, q);
+            quad_append_new(quad_opcode_assign, operand1, operand2, result);
             return result;
 
         return quad_operand_empty(); /* TODO */
