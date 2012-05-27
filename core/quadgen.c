@@ -28,8 +28,14 @@ Function make_function(Identifier id) {
     return x;
 }
 
-void quad_append_new(Quad_opname opname, Quad_operand op1, Quad_operand op2, Quad_operand op3) {
-    q = quad_list(quad(++quad_count, opname, op1, op2, op3), q);
+Quad quad_append_new(Quad_opname opname, Quad_operand op1, Quad_operand op2, Quad_operand op3) {
+    Quad newquad = quad(++quad_count, opname, op1, op2, op3);
+    q = quad_list(newquad, q);
+    return newquad;
+}
+
+void quad_backpatch(Quad quad) {
+    quad->op3 = quad_operand_quadnumber(quad_count+1);
 }
 
 /* ---------------------------------------------------------------------
@@ -178,9 +184,11 @@ Type AST_par_quad_generate(AST_par p)
 
 Quad_operand AST_expr_quad_generate(AST_expr e) {
     SymbolEntry entry;
-    Quad_operand op1, op2;
+    Quad_operand op1, op2, reserved, if_operand, else_operand;
     /* Type expr1_type, expr2_type, expr3_type, result_type; */
     Scope scope;
+    Quad jump_to_if, jump_after_if, jump_after_else;
+    Temporary res;
 
     if (e == NULL) {
         /* fprintf(f, "<<NULL>>\n"); */
@@ -218,7 +226,7 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
 
             return AST_binop_quad_generate(op1, e->u.e_binop.op, op2);
 
-        case EXPR_id: 
+        case EXPR_id:
             /* entry = symbol_lookup(symbol_table, e->u.e_id.id, LOOKUP_ALL_SCOPES, 1); */
 
             /* switch(entry->entry_type) { */
@@ -328,16 +336,37 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
             /* return result_type; */
             return quad_operand_empty(); /* TODO */
 
-        case EXPR_if: 
-            /* expr1_type = AST_expr_quad_generate(e->u.e_if.econd); */
-            /* if ( !type_eq(expr1_type, type_bool()) ) */
-            /*     error("Type mismatch: Condition is not of type bool\n"); */
-            /* expr2_type = AST_expr_quad_generate(e->u.e_if.ethen);  */
-            /* expr3_type = AST_expr_quad_generate(e->u.e_if.eelse);        */
-            /* if ( !type_eq(expr2_type, expr3_type) ) */
-            /*     error("Type mismatch: Then and else parts don't match\n"); */
-            /* return expr2_type; */
-            return quad_operand_empty(); /* TODO */
+        case EXPR_if:
+            /* generate condition quads */
+            op1 = AST_expr_quad_generate(e->u.e_if.econd);
+
+            jump_to_if    = quad_append_new(quad_opcode_eq, op1,
+                    quad_operand_simple(quad_true()), quad_operand_empty());
+            jump_after_if = quad_append_new(quad_opcode_jump, quad_operand_empty(),
+                    quad_operand_empty(), quad_operand_empty());
+
+            /* generate if quads */
+            quad_backpatch(jump_to_if);
+            res.num = ++global_count;
+            res.typ = type_int(); /* TODO: fix this??? */
+            res.offset = 0;
+            reserved = quad_operand_simple(quad_temporary(res));
+
+            if_operand = AST_expr_quad_generate(e->u.e_if.ethen);
+            quad_append_new(quad_opcode_assign, if_operand, quad_operand_empty(),
+                    reserved); /* assign to reserved */
+            jump_after_else = quad_append_new(quad_opcode_jump, quad_operand_empty(),
+                    quad_operand_empty(), quad_operand_empty()); /* generate jump */
+            quad_backpatch(jump_after_if);
+
+            /* generate else quads */
+            else_operand = AST_expr_quad_generate(e->u.e_if.eelse);
+
+            quad_append_new(quad_opcode_assign, else_operand, quad_operand_empty(),
+                    reserved); /* assign to reserved */
+            quad_backpatch(jump_after_else);
+
+            return reserved;
 
         case EXPR_while:
             /* expr1_type = AST_expr_quad_generate(e->u.e_while.econd); */
@@ -487,6 +516,7 @@ Quad_operand AST_unop_quad_generate(AST_unop op, Quad_operand operand) {
 
     return NULL;
 }
+
 
 Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, Quad_operand operand2) {
     Quad newquad;

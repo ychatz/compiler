@@ -122,11 +122,13 @@ struct Quad_operand_tag {
       QUAD_deref,
       QUAD_addressof,
       QUAD_passmode,
+      QUAD_quadnumber,
       QUAD_empty
    } kind;
    union {
       Quad_simple simple;
       PassMode passmode;
+      int number;
   } u;
 };
 
@@ -170,11 +172,12 @@ struct Quad_list_tag {
 Quad quad (int label, Quad_opname opname,
            Quad_operand op1, Quad_operand op2, Quad_operand op3);
 
-Quad_operand quad_operand_simple    (Quad_simple qs);
-Quad_operand quad_operand_deref     (Quad_simple qs);
-Quad_operand quad_operand_addressof (Quad_simple qs);
-Quad_operand quad_operand_passmode  (PassMode m);
-Quad_operand quad_operand_empty     ();
+Quad_operand quad_operand_simple     (Quad_simple qs);
+Quad_operand quad_operand_deref      (Quad_simple qs);
+Quad_operand quad_operand_addressof  (Quad_simple qs);
+Quad_operand quad_operand_passmode   (PassMode m);
+Quad_operand quad_operand_quadnumber (int number);
+Quad_operand quad_operand_empty      ();
 
 Quad_simple quad_iconst    (RepInt n);
 Quad_simple quad_true      ();

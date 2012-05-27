@@ -62,26 +62,26 @@ void Type_print (FILE * f, int prec, Type type)
    }
    switch (type->kind) {
       case TYPE_unit:
-         fprintf(f, "Type: unit\n");
+         fprintf(f, "Type: unit");
          break;
       case TYPE_bool:
-         fprintf(f, "Type: bool\n");
+         fprintf(f, "Type: bool");
          break;
       case TYPE_char:
-         fprintf(f, "Type: char\n");
+         fprintf(f, "Type: char");
          break;
       case TYPE_int:
          fprintf(f, "Type: int");
          break;
       case TYPE_float:
-         fprintf(f, "Type: float\n");
+         fprintf(f, "Type: float");
          break;
       case TYPE_array:
-         fprintf(f, "Type: array (\n");
+         fprintf(f, "Type: array (");
          indent(f, prec+1);
          fprintf(f, "dim = %d\n", type->u.t_array.dim);
          Type_print(f, prec+1, type->u.t_array.type);
-         indent(f, prec); fprintf(f, ")\n");
+         indent(f, prec); fprintf(f, ")");
          break;
       case TYPE_ref:
          fprintf(f, "Type: ref (\n");
