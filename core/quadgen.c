@@ -191,23 +191,23 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
             return quad_operand_simple(quad_iconst(e->u.e_iconst.rep));
 
         case EXPR_fconst:
-            return quad_operand_empty(); /* TODO */
+            return quad_operand_simple(quad_fconst(e->u.e_fconst.rep));
 
         case EXPR_cconst:
-            return quad_operand_empty(); /* TODO */
-
+            return quad_operand_simple(quad_cconst(e->u.e_cconst.rep));
+ 
         case EXPR_strlit:
-            return quad_operand_empty(); /* TODO */
-
+            return quad_operand_simple(quad_strlit(e->u.e_strlit.rep));
+       
         case EXPR_true:
-            return quad_operand_empty(); /* TODO */
-
+            return quad_operand_simple(quad_true());
+        
         case EXPR_false:
-            return quad_operand_empty(); /* TODO */
+            return quad_operand_simple(quad_false());
 
         case EXPR_unit:
-            return quad_operand_empty(); /* TODO */
-
+            return quad_operand_empty();
+        
         case EXPR_unop:
             op1 = AST_expr_quad_generate(e->u.e_unop.expr);
             return AST_unop_quad_generate(e->u.e_unop.op, op1);
@@ -507,7 +507,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            quad_append_new(quad_opcode_div, operand1, operand2, result)
+            quad_append_new(quad_opcode_div, operand1, operand2, result);
             return result;
 
 
@@ -516,7 +516,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             res.typ = type_int();
             res.offset = 0;
 
-            result = quad_operand_simple(quad_temporary(res);
+            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_mod, operand1, operand2, result);
             return result;
 
