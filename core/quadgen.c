@@ -9,6 +9,7 @@
 SymbolTable symbol_table;
 SymbolTable type_symbol_table;
 int global_count;
+int quad_count;
 Quad_list q;
 
 /* void add_function(const char *name, Type parameter_type, Type result_type ) { */
@@ -19,6 +20,17 @@ Quad_list q;
 /*     entry->e.function.result_type = result_type; */
 /*     entry->e.function.type = type_func(parameter_type, result_type); */
 /* } */
+
+/* TODO: do we need to pass more information about the function? */
+Function make_function(Identifier id) {
+    Function x;
+    x.id = id;
+    return x;
+}
+
+void quad_append_new(Quad_opname opname, Quad_operand op1, Quad_operand op2, Quad_operand op3) {
+    q = quad_list(quad(++quad_count, opname, op1, op2, op3), q);
+}
 
 /* ---------------------------------------------------------------------
    ---- Implementation of functions required by the abstract syntax ----
@@ -85,15 +97,19 @@ void AST_def_quad_generate(AST_def d) {
             entry->entry_type = ENTRY_FUNCTION;
             entry->e.function.result_type = d->u.d_normal.type;
 
+            quad_append_new(quad_opcode_unit, quad_operand_simple(quad_function(make_function(d->u.d_normal.id))), quad_operand_empty(), quad_operand_empty());
             scope_open(symbol_table);
 
             par_type = AST_par_list_quad_generate(d->u.d_normal.list);
-            if ( d->u.d_normal.list == NULL )
-                entry->e.function.type = d->u.d_normal.type;
-            else
-                entry->e.function.type = type_func(par_type, d->u.d_normal.type);
+            /* if ( d->u.d_normal.list == NULL ) */
+            /*     entry->e.function.type = d->u.d_normal.type; */
+            /* else */
+            /*     entry->e.function.type = type_func(par_type, d->u.d_normal.type); */
 
             AST_expr_quad_generate(d->u.d_normal.expr);
+
+            /* TODO: backpatch this quad in the expression body (papaspyrou, page 198)? */
+            quad_append_new(quad_opcode_endu, quad_operand_simple(quad_function(make_function(d->u.d_normal.id))), quad_operand_empty(), quad_operand_empty());
 
             scope_close(symbol_table);
             break;
