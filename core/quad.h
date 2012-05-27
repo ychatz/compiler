@@ -74,7 +74,8 @@ typedef enum {
    quad_opcode_unit,
    quad_opcode_exp,
    quad_opcode_and,
-   quad_opcode_or
+   quad_opcode_or,
+   quad_opcode_not
 } Quad_opname;
 
 typedef enum {

@@ -435,30 +435,51 @@ void AST_pattern_quad_generate(AST_pattern p, Type type) {
 }
 
 Quad_operand AST_unop_quad_generate(AST_unop op, Quad_operand operand) {
+    
+    Quad newquad;
+    Quad_operand result;
+    Temporary res;   
+    
     switch (op) {
         case ast_unop_plus:
             return operand;
         case ast_unop_minus:
-            operand->u.simple->u.n *= -1;
-            return operand;
+            res.num = ++global_count;
+            res.typ = type_int();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            quad_append_new(quad_opcode_times, quad_operand_simple(quad_iconst(-1)), operand, result);       
+            return result;
 
         case ast_unop_fplus:
             return operand;
         case ast_unop_fminus:
-            operand->u.simple->u.f *= -1;
-            return operand;
+            res.num = ++global_count;
+            res.typ = type_float();
+            res.offset = 0;
 
-        case ast_unop_exclam: /*TODO*/
-            return operand;
-            /* if ( !type_check_ref(expr, true) ) */
-            /*     error("Type mismatch: Argument is not of type ref\n"); */
-            /* return (expr == NULL ? NULL : expr->u.t_ref.type); */
+            result = quad_operand_simple(quad_temporary(res));
+            quad_append_new(quad_opcode_times, quad_operand_simple(quad_fconst(-1)), operand, result);       
+            return result;
 
-        case ast_unop_not: /*TODO*/
-            /* if ( !type_eq(expr, type_bool()) ) */
-            /*     error("Type mismatch: Argument is not of type bool\n"); */
-            /* return type_bool(); */
-            return operand;
+        case ast_unop_exclam: /*TODO Ti typo tha valoume sto deref? */
+            res.num = ++global_count;
+            res.typ = type_float();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            quad_append_new(quad_opcode_assign, quad_operand_deref(operand->u.simple), quad_operand_empty(), result);       
+            return result;     
+
+        case ast_unop_not: 
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            quad_append_new(quad_opcode_not, operand, quad_operand_empty(), result);       
+            return result;
 
         default:
             internal("invalid AST");

@@ -297,6 +297,7 @@ void quad_print (FILE * f, Quad q)
       case quad_opcode_exp:      fprintf(f, "**, ");    break;   
       case quad_opcode_and:      fprintf(f, "and, ");   break;              
       case quad_opcode_or:       fprintf(f, "or, ");    break;
+      case quad_opcode_not:      fprintf(f, "not, ");   break;
    }
    quad_operand_print(f, q->op1);   fprintf(f, ", ");
    quad_operand_print(f, q->op2);   fprintf(f, ", ");
