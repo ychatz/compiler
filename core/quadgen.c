@@ -468,27 +468,218 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
             return result;
 
         case ast_binop_minus:
+            res.num = ++global_count;
+            res.typ = type_int();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_minus, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+        
         case ast_binop_times:
+            res.num = ++global_count;
+            res.typ = type_int();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_times, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+
+ 
         case ast_binop_div:
+            res.num = ++global_count;
+            res.typ = type_int();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_div, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+
+
         case ast_binop_mod:
+            res.num = ++global_count;
+            res.typ = type_int();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_mod, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+
         case ast_binop_fplus:
+            res.num = ++global_count;
+            res.typ = type_float();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_plus, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+
         case ast_binop_fminus:
+            res.num = ++global_count;
+            res.typ = type_float();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_minus, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+
         case ast_binop_ftimes:
+            res.num = ++global_count;
+            res.typ = type_float();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_times, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+
         case ast_binop_fdiv:
+            res.num = ++global_count;
+            res.typ = type_float();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_div, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;    
+
         case ast_binop_exp:
+            res.num = ++global_count;
+            res.typ = type_float();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_exp, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+
         case ast_binop_lt:
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_lt, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result; 
+
         case ast_binop_gt:
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_gt, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+
         case ast_binop_le:
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_le, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result; 
+
         case ast_binop_ge:
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_ge, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result; 
+
         case ast_binop_eq:
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_eq, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+
         case ast_binop_ne:
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_ne, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result; 
+
         case ast_binop_pheq:
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_eqeq, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result; 
+
         case ast_binop_phne:
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_nxeq, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result; 
+
         case ast_binop_and:
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_and, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result; 
+
         case ast_binop_or:
-        case ast_binop_semicolon:
+            res.num = ++global_count;
+            res.typ = type_bool();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_or, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result; 
+
+        case ast_binop_semicolon:     /* TODO */
+            res.num = ++global_count;
+            res.typ = type_float();
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_div, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result; 
+
         case ast_binop_assign:
-            return quad_operand_empty(); /* TODO */
+            res.num = ++global_count;
+            res.typ = type_float(); /* TODO: Ti typou einai afto? :) */
+            res.offset = 0;
+
+            result = quad_operand_simple(quad_temporary(res));
+            newquad = quad(1, quad_opcode_assign, operand1, operand2, result);
+            q = quad_list(newquad, q);
+            return result;
+
+        return quad_operand_empty(); /* TODO */
 
         default:
             internal("invalid AST");
