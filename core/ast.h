@@ -101,15 +101,18 @@ typedef enum {
 
 struct AST_program_tag {
    AST_ltdef_list list;
+   int lineno;
 };
 
 struct AST_letdef_tag {
    bool recFlag;
    AST_def_list list;
+   int lineno;
 };
 
 struct AST_typedef_tag {
    AST_tdef_list list;
+   int lineno;
 };
 
 struct AST_def_tag {
@@ -130,21 +133,25 @@ struct AST_def_tag {
          Type type;
       } d_mutable;
    } u;
+   int lineno;
 };
 
 struct AST_tdef_tag {
    Identifier id;
    AST_constr_list list;
+   int lineno;
 };
 
 struct AST_constr_tag {
    Identifier id;
    Type_list list;
+   int lineno;
 };
 
 struct AST_par_tag {
    Identifier id;
    Type type;
+   int lineno;
 };
 
 struct AST_expr_tag {
@@ -247,11 +254,13 @@ struct AST_expr_tag {
          AST_clause_list list;
       } e_match;
    } u;
+   int lineno;
 };
 
 struct AST_clause_tag {
    AST_pattern pattern;
    AST_expr expr;
+   int lineno;
 };
 
 struct AST_pattern_tag {
@@ -282,6 +291,7 @@ struct AST_pattern_tag {
          AST_pattern_list list;
       } p_Id;
    } u;
+   int lineno;
 };
 
 
@@ -297,46 +307,55 @@ struct AST_ltdef_list_tag {
       AST_typedef typdef;
    } head;
    AST_ltdef_list tail;
+   int lineno;
 };
 
 struct AST_def_list_tag {
    AST_def head;
    AST_def_list tail;
+   int lineno;
 };
 
 struct AST_tdef_list_tag {
    AST_tdef head;
    AST_tdef_list tail;
+   int lineno;
 };
 
 struct AST_constr_list_tag {
    AST_constr head;
    AST_constr_list tail;
+   int lineno;
 };
 
 struct AST_par_list_tag {
    AST_par head;
    AST_par_list tail;
+   int lineno;
 };
 
 struct AST_expr_list_tag {
    AST_expr head;
    AST_expr_list tail;
+   int lineno;
 };
 
 struct AST_clause_list_tag {
    AST_clause head;
    AST_clause_list tail;
+   int lineno;
 };
 
 struct AST_pattern_list_tag {
    AST_pattern head;
    AST_pattern_list tail;
+   int lineno;
 };
 
 struct Type_list_tag {
    Type head;
    Type_list tail;
+   int lineno;
 };
 
 
