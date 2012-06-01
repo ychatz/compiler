@@ -9,38 +9,6 @@
 SymbolTable symbol_table;
 SymbolTable type_symbol_table;
 
-Identifier to_hash(AST_expr e) {
-    char temp[4000]; /* TODO: Fix this */
-
-    switch (e->kind) {
-        case EXPR_iconst:
-            sprintf(temp, "__int_%d", e->u.e_iconst.rep);
-            break;
-        case EXPR_fconst:
-            sprintf(temp, "__float_%lf", e->u.e_fconst.rep);
-            break;
-        case EXPR_cconst:
-            sprintf(temp, "__float_%s", e->u.e_cconst.rep);
-            break;
-        case EXPR_strlit:
-            sprintf(temp, "__char_%s", e->u.e_cconst.rep);
-            break;
-        case EXPR_true:
-            strcpy(temp, "__true");
-            break;
-        case EXPR_false:
-            strcpy(temp, "__false");
-            break;
-        case EXPR_unit:
-            strcpy(temp, "__unit");
-            break;
-        default:
-            internal("Can't convert expression tag to hash\n");
-    }
-
-    return id_make(temp);
-}
-
 void add_function(const char *name, Type parameter_type, Type result_type ) {
     SymbolEntry entry;
 
@@ -48,23 +16,6 @@ void add_function(const char *name, Type parameter_type, Type result_type ) {
     entry->entry_type = ENTRY_FUNCTION;
     entry->e.function.result_type = result_type;
     entry->e.function.type = type_func(parameter_type, result_type);
-}
-
-Type unify(Type first_type, Type second_type, bool err) {
-    if ( first_type == NULL ) first_type = type_unknown();
-    if ( second_type == NULL ) second_type = type_unknown();
-
-    if ( first_type->kind == TYPE_unknown &&
-            second_type->kind == TYPE_unknown ) return type_unknown();
-
-    if ( first_type->kind == TYPE_unknown ) return second_type;
-    if ( second_type->kind == TYPE_unknown ) return first_type;
-
-    if ( first_type->kind == second_type->kind ) return first_type;
-
-    error("Cannot unify types\n");
-
-    return type_unknown();
 }
 
 bool type_check_ref(Type a, bool deft) {
@@ -112,45 +63,45 @@ void AST_program_traverse(AST_program p) {
     scope_open(symbol_table);
 
 #define ADD_FUNC(str, par, res) \
-    add_function(str, type_##par(), type_##res());
+    add_function(str, type_##par(), type_##res())
 #define type_STRING() \
     type_array(1, type_char())
 #define type_INT_REF() \
     type_ref(type_int())
 
-    ADD_FUNC("print_int", int, unit)
-    ADD_FUNC("print_bool", bool, unit)
-    ADD_FUNC("print_char", char, unit)
-    ADD_FUNC("print_float", float, unit)
-    ADD_FUNC("print_string", STRING, unit)
+    ADD_FUNC("print_int", int, unit);
+    ADD_FUNC("print_bool", bool, unit);
+    ADD_FUNC("print_char", char, unit);
+    ADD_FUNC("print_float", float, unit);
+    ADD_FUNC("print_string", STRING, unit);
 
-    ADD_FUNC("read_int", unit, int)
-    ADD_FUNC("read_bool", unit, bool)
-    ADD_FUNC("read_char", unit, char)
-    ADD_FUNC("read_float", unit, float)
-    ADD_FUNC("read_string", STRING, unit)
+    ADD_FUNC("read_int", unit, int);
+    ADD_FUNC("read_bool", unit, bool);
+    ADD_FUNC("read_char", unit, char);
+    ADD_FUNC("read_float", unit, float);
+    ADD_FUNC("read_string", STRING, unit);
 
-    ADD_FUNC("fabs", float, float)
-    ADD_FUNC("sqrt", float, float)
-    ADD_FUNC("sin", float, float)
-    ADD_FUNC("cos", float, float)
-    ADD_FUNC("tan", float, float)
-    ADD_FUNC("atan", float, float)
-    ADD_FUNC("exp", float, float)
-    ADD_FUNC("ln", float, float)
-    ADD_FUNC("pi", unit, float)
+    ADD_FUNC("fabs", float, float);
+    ADD_FUNC("sqrt", float, float);
+    ADD_FUNC("sin", float, float);
+    ADD_FUNC("cos", float, float);
+    ADD_FUNC("tan", float, float);
+    ADD_FUNC("atan", float, float);
+    ADD_FUNC("exp", float, float);
+    ADD_FUNC("ln", float, float);
+    ADD_FUNC("pi", unit, float);
     
-    ADD_FUNC("incr", INT_REF, unit)
-    ADD_FUNC("decr", INT_REF, unit)
-    
-    ADD_FUNC("float_of_int", int, float)
-    ADD_FUNC("int_of_float", float, int)
-    ADD_FUNC("round", float, int)
+    ADD_FUNC("incr", INT_REF, unit);
+    ADD_FUNC("decr", INT_REF, unit);
 
-    ADD_FUNC("int_of_char", char, int)
-    ADD_FUNC("char_of_int", int, char)
+    ADD_FUNC("float_of_int", int, float);
+    ADD_FUNC("int_of_float", float, int);
+    ADD_FUNC("round", float, int);
 
-    ADD_FUNC("strlen", STRING, int)
+    ADD_FUNC("int_of_char", char, int);
+    ADD_FUNC("char_of_int", int, char);
+
+    ADD_FUNC("strlen", STRING, int);
     add_function("strcmp", type_func(type_STRING(), type_STRING()), type_int());
     add_function("strcpy", type_func(type_STRING(), type_STRING()), type_unit());
     add_function("strcat", type_func(type_STRING(), type_STRING()), type_unit());
@@ -196,7 +147,7 @@ Scope AST_typedef_traverse(AST_typedef td) {
 
 void AST_def_traverse(AST_def d) {
     SymbolEntry entry;
-    Type expr_type,/* unif_type,*/ par_type;
+    Type expr_type, par_type;
     int dim_count;
 
     if (d == NULL) return;
@@ -210,8 +161,7 @@ void AST_def_traverse(AST_def d) {
             scope_open(symbol_table);
 
             par_type = AST_par_list_traverse(d->u.d_normal.list);
-            /* warning("SETTING %s\n", d->u.d_normal.id->name);  */
-            /* Type_print(stdout, 0, par_type); */
+
             if ( d->u.d_normal.list == NULL )
                 entry->e.function.type = d->u.d_normal.type;
             else
@@ -221,7 +171,6 @@ void AST_def_traverse(AST_def d) {
 
             if ( !type_eq(expr_type, entry->e.function.result_type) )
                 error("Function expression type does not match its definition\n");
-            /* entry->e.function.result_type = unify(expr_type, d->u.d_normal.type, 1); */
 
             scope_close(symbol_table);
             break;
