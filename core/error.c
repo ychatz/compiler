@@ -46,88 +46,88 @@ int  maxWarnings = 200;
 
 void internal_raw (const char * fn, int lc, const char * fmt, ...)
 {
-   va_list ap;
+    va_list ap;
 
-   va_start(ap, fmt);
-   if (fmt[0] == '\r')
-      fmt++;
-   else
-      fprintf(stderr, "%s:%d: ", filename, linecount);
-   fprintf(stderr, "Internal error occurred at %s:%d, ", fn, lc);
-   vfprintf(stderr, fmt, ap);
-   fprintf(stderr, "\n");
-   va_end(ap);
-   numErrors++;
-   terminate(1);
+    va_start(ap, fmt);
+    if (fmt[0] == '\r')
+        fmt++;
+    else
+        fprintf(stderr, "%s:%d: ", filename, linecount);
+    fprintf(stderr, "Internal error occurred at %s:%d, ", fn, lc);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
+    numErrors++;
+    terminate(1);
 }
 
 void fatal (const char * fmt, ...)
 {
-   va_list ap;
+    va_list ap;
 
-   va_start(ap, fmt);
-   if (fmt[0] == '\r')
-      fmt++;
-   else
-      fprintf(stderr, "%s:%d: ", filename, linecount);
-   fprintf(stderr, "Fatal error, ");
-   vfprintf(stderr, fmt, ap);
-   fprintf(stderr, "\n");
-   va_end(ap);
-   numErrors++;
-   terminate(1);
+    va_start(ap, fmt);
+    if (fmt[0] == '\r')
+        fmt++;
+    else
+        fprintf(stderr, "%s:%d: ", filename, linecount);
+    fprintf(stderr, "Fatal error, ");
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
+    numErrors++;
+    terminate(1);
 }
 
 void error (const char * fmt, ...)
 {
-   va_list ap;
+    va_list ap;
 
-   va_start(ap, fmt);
-   if (fmt[0] == '\r')
-      fmt++;
-   else
-      fprintf(stderr, "%s:%d: ", filename, linecount-1);
-   fprintf(stderr, "Error, ");
-   vfprintf(stderr, fmt, ap);
-   fprintf(stderr, "\n");
-   va_end(ap);
-   if (numErrors++ >= maxErrors) {
-      message("\rToo many errors, aborting...");
-      terminate(1);
-   }
+    va_start(ap, fmt);
+    if (fmt[0] == '\r')
+        fmt++;
+    else
+        fprintf(stderr, "%s:%d: ", filename, linecount-1);
+    fprintf(stderr, "Error, ");
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
+    if (numErrors++ >= maxErrors) {
+        message("\rToo many errors, aborting...");
+        terminate(1);
+    }
 }
 
 void warning (const char * fmt, ...)
 {
-   if (flagWarnings) {
-      va_list ap;
+    if (flagWarnings) {
+        va_list ap;
 
-      va_start(ap, fmt);
-      /* if (fmt[0] == '\r') */
-      /*    fmt++; */
-      /* else */
-      /*    fprintf(stderr, "%s:%d: ", filename, linecount); */
-      fprintf(stderr, "Warning, ");
-      vfprintf(stderr, fmt, ap);
-      fprintf(stderr, "\n");
-      va_end(ap);
-      if (numWarnings++ >= maxWarnings) {
-         message("\rToo many warnings, no more will be shown...");
-         flagWarnings = false;
-      }
-   }
+        va_start(ap, fmt);
+        /* if (fmt[0] == '\r') */
+        /*    fmt++; */
+        /* else */
+        /*    fprintf(stderr, "%s:%d: ", filename, linecount); */
+        fprintf(stderr, "Warning, ");
+        vfprintf(stderr, fmt, ap);
+        fprintf(stderr, "\n");
+        va_end(ap);
+        if (numWarnings++ >= maxWarnings) {
+            message("\rToo many warnings, no more will be shown...");
+            flagWarnings = false;
+        }
+    }
 }
 
 void message (const char * fmt, ...)
 {
-   va_list ap;
+    va_list ap;
 
-   va_start(ap, fmt);
-   if (fmt[0] == '\r')
-      fmt++;
-   else
-      fprintf(stderr, "%s:%d: ", filename, linecount);
-   vfprintf(stderr, fmt, ap);
-   fprintf(stderr, "\n");
-   va_end(ap);
+    va_start(ap, fmt);
+    if (fmt[0] == '\r')
+        fmt++;
+    else
+        fprintf(stderr, "%s:%d: ", filename, linecount);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
 }

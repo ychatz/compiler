@@ -38,10 +38,7 @@
 
 void          AST_program_quad_generate       (AST_program);
 Scope         AST_letdef_quad_generate        (AST_letdef);
-Scope         AST_typedef_quad_generate       (AST_typedef);
 void          AST_def_quad_generate           (AST_def);
-void          AST_tdef_quad_generate          (AST_tdef, Scope);
-void          AST_constr_quad_generate        (AST_constr, Type);
 Type          AST_par_quad_generate           (AST_par);
 Quad_operand  AST_expr_quad_generate          (AST_expr);
 void          AST_clause_quad_generate        (AST_clause, Type);
@@ -52,8 +49,6 @@ Quad_operand  AST_binop_quad_generate         (Quad_operand, AST_expr, Quad_oper
 
 void          AST_ltdef_list_quad_generate    (AST_ltdef_list);
 void          AST_def_list_quad_generate      (AST_def_list);
-void          AST_tdef_list_quad_generate     (AST_tdef_list, Scope);
-void          AST_constr_list_quad_generate   (AST_constr_list, Type);
 Type          AST_par_list_quad_generate      (AST_par_list);
 Type          AST_expr_list_quad_generate     (AST_expr_list);
 void          AST_clause_list_quad_generate   (AST_clause_list, Type);

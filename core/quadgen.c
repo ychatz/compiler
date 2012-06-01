@@ -77,19 +77,6 @@ Scope AST_letdef_quad_generate(AST_letdef ld)
     /* return scope; */
 }
 
-Scope AST_typedef_quad_generate(AST_typedef td) {
-    Scope scope;
-
-    if (td == NULL) {
-        return NULL;
-    }
-
-    /* scope = scope_open(type_symbol_table); */
-    AST_tdef_list_quad_generate(td->list, scope);
-
-    return scope;
-}
-
 void AST_def_quad_generate(AST_def d) {
     SymbolEntry entry;
     Type par_type;
@@ -132,43 +119,6 @@ void AST_def_quad_generate(AST_def d) {
     }
 }
 
-void AST_tdef_quad_generate(AST_tdef td, Scope scope) {
-    SymbolEntry entry;
-    Type user_type;
-
-    if (td == NULL) {
-        return;
-    }
-
-    user_type = type_id(td->id);
-
-    /* entry = symbol_enter(type_symbol_table, td->id, 1); */
-    /* entry->entry_type = ENTRY_TYPE; */
-    /* entry->e.type.type = user_type; */
-    /* entry->e.type.scope = scope; */
-    AST_constr_list_quad_generate(td->list, user_type);
-}
-
-void AST_constr_quad_generate(AST_constr c, Type user_type) {
-    /* SymbolEntry entry; */
-
-    /* if (c == NULL) { */
-    /*     return; */
-    /* } */
-
-    /* #<{(| do not allow two types to use the same constructor |)}># */
-    /* entry = symbol_lookup(type_symbol_table, c->id, LOOKUP_ALL_SCOPES, 0); */
-    /* if ( entry != NULL ) */
-    /*     error("Constructor %s is used more than one time\n",  c->id->name); */
-
-    /* #<{(| do not allow the same constructor to defined twice in a type definition |)}># */
-    /* entry = symbol_enter(type_symbol_table, c->id, 1); */
-
-    /* entry->entry_type = ENTRY_CONSTRUCTOR; */
-    /* entry->e.constructor.type = user_type; */
-    /* entry->e.constructor.argument_type = Type_list_quad_generate(c->list); */
-}
-
 Type AST_par_quad_generate(AST_par p)
 {
     /* SymbolEntry entry; */
@@ -203,19 +153,19 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
 
         case EXPR_cconst:
             return quad_operand_simple(quad_cconst(e->u.e_cconst.rep));
- 
+
         case EXPR_strlit:
             return quad_operand_simple(quad_strlit(e->u.e_strlit.rep));
-       
+
         case EXPR_true:
             return quad_operand_simple(quad_true());
-        
+
         case EXPR_false:
             return quad_operand_simple(quad_false());
 
         case EXPR_unit:
             return quad_operand_empty();
-        
+
         case EXPR_unop:
             op1 = AST_expr_quad_generate(e->u.e_unop.expr);
             return AST_unop_quad_generate(e->u.e_unop.op, op1);
@@ -348,7 +298,7 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
             /* generate if quads */
             quad_backpatch(jump_to_if);
             res.num = ++global_count;
-            res.typ = type_int(); /* TODO: fix this??? */
+            res.typ = e->u.e_if.ethen->type; /* TODO: fix this??? */
             res.offset = 0;
             reserved = quad_operand_simple(quad_temporary(res));
 
@@ -464,11 +414,11 @@ void AST_pattern_quad_generate(AST_pattern p, Type type) {
 }
 
 Quad_operand AST_unop_quad_generate(AST_unop op, Quad_operand operand) {
-    
+
     Quad newquad;
     Quad_operand result;
     Temporary res;   
-    
+
     switch (op) {
         case ast_unop_plus:
             return operand;
@@ -542,7 +492,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_expr e, Quad_ope
             result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_minus, operand1, operand2, result);
             return result;
-        
+
         case ast_binop_times:
             res.num = ++global_count;
             res.typ = e->type;
@@ -724,7 +674,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_expr e, Quad_ope
             quad_append_new(quad_opcode_assign, operand1, operand2, result);
             return result;
 
-        return quad_operand_empty(); /* TODO */
+            return quad_operand_empty(); /* TODO */
 
         default:
             internal("invalid AST");
@@ -744,40 +694,20 @@ void AST_ltdef_list_quad_generate(AST_ltdef_list l)
             AST_ltdef_list_quad_generate(l->tail);
             break;
         case LTDEF_type:
-            AST_typedef_quad_generate(l->head.typdef);
-            AST_ltdef_list_quad_generate(l->tail);
             break;
         default:
             internal("invalid AST");
     }
 }
 
-void AST_def_list_quad_generate(AST_def_list l)
-{
+void AST_def_list_quad_generate(AST_def_list l) {
     if (l == NULL) return;
 
     AST_def_quad_generate(l->head);
     AST_def_list_quad_generate(l->tail);
 }
 
-void AST_tdef_list_quad_generate(AST_tdef_list l, Scope scope)
-{
-    if (l == NULL) return;
-
-    AST_tdef_quad_generate(l->head, scope);
-    AST_tdef_list_quad_generate(l->tail, scope);
-}
-
-void AST_constr_list_quad_generate(AST_constr_list l, Type user_type)
-{
-    if (l == NULL) return;
-
-    AST_constr_quad_generate(l->head, user_type);
-    AST_constr_list_quad_generate(l->tail, user_type);
-}
-
-Type AST_par_list_quad_generate(AST_par_list l)
-{
+Type AST_par_list_quad_generate(AST_par_list l) {
     Type temp, temp2;
 
     if (l == NULL) return NULL;
@@ -848,7 +778,7 @@ Type Type_list_quad_generate(Type_list l) {
     /* TODO: mipws den epitrepontai kapoioi typoi? (p.x. ref) */
     switch(l->head->kind) {
         case TYPE_id:
-            symbol_lookup(type_symbol_table, l->head->u.t_id.id, LOOKUP_ALL_SCOPES, 1);
+            /* symbol_lookup(type_symbol_table, l->head->u.t_id.id, LOOKUP_ALL_SCOPES, 1); */
             break;
 
         default:

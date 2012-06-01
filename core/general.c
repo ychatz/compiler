@@ -46,9 +46,9 @@ bool flagVerbose = true;
 
 void terminate (int code)
 {
-   if (flagVerbose)
-      message("\r\nErrors:   %d\nWarnings: %d", numErrors, numWarnings);
-   exit(code);
+    if (flagVerbose)
+        message("\r\nErrors:   %d\nWarnings: %d", numErrors, numWarnings);
+    exit(code);
 }
 
 
@@ -58,25 +58,25 @@ void terminate (int code)
 
 void * new (size_t size)
 {
-   void * result =
+    void * result =
 #if USEGC
-      GC_MALLOC(size);
+        GC_MALLOC(size);
 #else
-      malloc(size);
+    malloc(size);
 #endif
 
-   if (result == NULL)
-      fatal("\rOut of memory");
-   return result;
+    if (result == NULL)
+        fatal("\rOut of memory");
+    return result;
 }
 
 void delete (void * p)
 {
-   if (p != NULL)
+    if (p != NULL)
 #if USEGC
-      GC_FREE(p);
+        GC_FREE(p);
 #else
-      free(p);
+    free(p);
 #endif
 }
 
@@ -125,12 +125,12 @@ static HashType PJW_hash (const char * key)
 
 static Identifier id_make_new (const char * name, Identifier next)
 {
-   Identifier result = new (sizeof (struct Identifier_tag));
+    Identifier result = new (sizeof (struct Identifier_tag));
 
-   result->name = new(strlen(name) + 1);
-   strcpy(result->name, name);
-   result->next = next;
-   return result;
+    result->name = new(strlen(name) + 1);
+    strcpy(result->name, name);
+    result->next = next;
+    return result;
 }
 
 /* Το μέγεθος του πίνακα κατακερματισμού πρέπει να είναι πρώτος αριθμός */
@@ -145,22 +145,22 @@ static Identifier hashtable [SIZE];
 
 Identifier id_make (const char * name)
 {
-   HashType index = PJW_hash(name) % SIZE;
+    HashType index = PJW_hash(name) % SIZE;
 
-   Identifier ids = hashtable[index];
-   Identifier id;
+    Identifier ids = hashtable[index];
+    Identifier id;
 
-   for (id=ids; id != NULL; id=id->next)
-      if (strcmp(id->name, name) == 0)
-         return id;
-   id = id_make_new(name, ids);
-   hashtable[index] = id;
-   return id;
+    for (id=ids; id != NULL; id=id->next)
+        if (strcmp(id->name, name) == 0)
+            return id;
+    id = id_make_new(name, ids);
+    hashtable[index] = id;
+    return id;
 }
 
 const char * id_name (Identifier id)
 {
-   return id->name;
+    return id->name;
 }
 
 /* ΠΡΟΣΟΧΗ: Κλήση της παρακάτω συνάρτησης αν ακόμα βρίσκονται αναγνωριστικά σε
@@ -168,8 +168,8 @@ const char * id_name (Identifier id)
 
 void id_reset ()
 {
-   int i;
+    int i;
 
-   for (i=0; i<SIZE; i++)
-      hashtable[i] = NULL;
+    for (i=0; i<SIZE; i++)
+        hashtable[i] = NULL;
 }
