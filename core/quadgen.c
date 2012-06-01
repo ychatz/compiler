@@ -6,20 +6,9 @@
 #include "quadgen.h"
 #include "pretty.h"
 
-/* SymbolTable symbol_table; */
-/* SymbolTable type_symbol_table; */
 int global_count;
 int quad_count;
 Quad_list q;
-
-/* void add_function(const char *name, Type parameter_type, Type result_type ) { */
-/*     SymbolEntry entry; */
-/*  */
-/*     entry = symbol_enter(symbol_table, id_make(name), 0); */
-/*     entry->entry_type = ENTRY_FUNCTION; */
-/*     entry->e.function.result_type = result_type; */
-/*     entry->e.function.type = type_func(parameter_type, result_type); */
-/* } */
 
 /* TODO: do we need to pass more information about the function? */
 Function make_function(Identifier id) {
@@ -47,34 +36,16 @@ void AST_program_quad_generate(AST_program p) {
         return;
     }
 
-    /* type_symbol_table = symbol_make(28447); */
-    /* symbol_table = symbol_make(28447); */
-    /* scope_open(symbol_table); */
-
     AST_ltdef_list_quad_generate(p->list);
-    /* scope_close(symbol_table); */
 }
 
-Scope AST_letdef_quad_generate(AST_letdef ld)
-{
+Scope AST_letdef_quad_generate(AST_letdef ld) {
     Scope scope;
     if (ld == NULL) {
         return NULL;
     }
 
-    /* scope = scope_open(symbol_table); */
-
-    /* if ( ld->recFlag == false ) { */
-    /*     scope_hide(scope, true); */
-    /* } */
-
     AST_def_list_quad_generate(ld->list);
-
-    /* if ( ld->recFlag == false ) { */
-    /*     scope_hide(scope, false); */
-    /* } */
-
-    /* return scope; */
 }
 
 void AST_def_quad_generate(AST_def d) {
@@ -473,204 +444,97 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_expr e, Quad_ope
     Quad_operand result;
     Temporary res;
 
+    res.num = ++global_count;
+    res.typ = e->type;
+    res.offset = 0;
+    result = quad_operand_simple(quad_temporary(res));
+
     switch (e->u.e_binop.op) {
         case ast_binop_plus:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_plus, operand1, operand2, result);
-
             return result;
 
         case ast_binop_minus:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_minus, operand1, operand2, result);
             return result;
 
         case ast_binop_times:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_times, operand1, operand2, result);
             return result;
 
         case ast_binop_div:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_div, operand1, operand2, result);
             return result;
 
-
         case ast_binop_mod:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_mod, operand1, operand2, result);
             return result;
 
         case ast_binop_fplus:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_plus, operand1, operand2, result);
             return result;
 
         case ast_binop_fminus:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_minus, operand1, operand2, result);
             return result;
 
         case ast_binop_ftimes:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_times, operand1, operand2, result);
             return result;
 
         case ast_binop_fdiv:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_div, operand1, operand2, result);
             return result;    
 
         case ast_binop_exp:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_exp, operand1, operand2, result);
             return result;
 
         case ast_binop_lt:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_lt, operand1, operand2, result);
             return result; 
 
         case ast_binop_gt:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_gt, operand1, operand2, result);
             return result;
 
         case ast_binop_le:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_le, operand1, operand2, result);
             return result; 
 
         case ast_binop_ge:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_ge, operand1, operand2, result);
             return result; 
 
         case ast_binop_eq:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_eq, operand1, operand2, result);
             return result;
 
         case ast_binop_ne:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_ne, operand1, operand2, result);
             return result; 
 
         case ast_binop_pheq:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_eqeq, operand1, operand2, result);
             return result; 
 
         case ast_binop_phne:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_nxeq, operand1, operand2, result);
             return result; 
 
         case ast_binop_and:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_and, operand1, operand2, result);
             return result; 
 
         case ast_binop_or:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_or, operand1, operand2, result);
             return result; 
 
         case ast_binop_semicolon:     /* TODO */
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_div, operand1, operand2, result);
             return result; 
 
         case ast_binop_assign:
-            res.num = ++global_count;
-            res.typ = e->type;
-            res.offset = 0;
-
-            result = quad_operand_simple(quad_temporary(res));
             quad_append_new(quad_opcode_assign, operand1, operand2, result);
             return result;
 
