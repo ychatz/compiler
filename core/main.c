@@ -20,19 +20,20 @@ extern int lineno;
 extern AST_program ast;
 extern FILE *yyin;
 extern Quad_list q;
+extern char *filename;
 
-int ERROR (const char msg []) {
+int ERROR(const char msg []) {
     fprintf(stderr, "ERROR, line %d: %s\n", lineno, msg);
     exit(1);
 }
 
-void yyerror (const char * msg)
+void yyerror(const char * msg)
 {
   fprintf(stderr, "ERROR, line: %d: %s\n", lineno, msg);
   exit(1);
 }
 
-int main (int argc, char **argv) {
+int main(int argc, char **argv) {
     if ( argc == 2 ) {
         yyin = fopen(argv[1], "r");
 
@@ -40,9 +41,17 @@ int main (int argc, char **argv) {
             fprintf(stderr, "ERROR, could not open \"%s\": %s\n", argv[1], strerror(errno));
             exit(1);
         }
+
+        filename = argv[1];
+        /* filename = new(sizeof(char) * strlen(argv[1])); */
+        /* strcpy(filename, argv[1]); */
     }
     else {
         yyin = stdin;
+
+        filename = "stdin";
+        /* filename = new(sizeof(char) * strlen("stdin")); */
+        /* strcpy(filename, "stdin"); */
     }
 
     /* lexical and syntax analysis */

@@ -6,6 +6,12 @@
 #include "symbol.h"
 #include "pretty.h"
 
+#define SEMANTIC_ERROR(object, ...) \
+    do { \
+        linecount = object->lineno; \
+        error(__VA_ARGS__); \
+    } while(0)
+
 SymbolTable symbol_table;
 SymbolTable type_symbol_table;
 
@@ -170,7 +176,7 @@ void AST_def_traverse(AST_def d) {
             expr_type = AST_expr_traverse(d->u.d_normal.expr);
 
             if ( !type_eq(expr_type, entry->e.function.result_type) )
-                error("Function expression type does not match its definition\n");
+                SEMANTIC_ERROR(d, "Function expression type does not match its definition\n");
 
             scope_close(symbol_table);
             break;
@@ -214,7 +220,7 @@ void AST_constr_traverse(AST_constr c, Type user_type) {
     /* do not allow two types to use the same constructor */
     entry = symbol_lookup(type_symbol_table, c->id, LOOKUP_ALL_SCOPES, 0);
     if ( entry != NULL )
-        error("Constructor %s is used more than one time\n",  c->id->name);
+        SEMANTIC_ERROR(c, "Constructor %s is used more than one time\n",  c->id->name);
 
     /* do not allow the same constructor to defined twice in a type definition */
     entry = symbol_enter(type_symbol_table, c->id, 1);
@@ -224,8 +230,7 @@ void AST_constr_traverse(AST_constr c, Type user_type) {
     entry->e.constructor.argument_type = Type_list_traverse(c->list);
 }
 
-Type AST_par_traverse(AST_par p)
-{
+Type AST_par_traverse(AST_par p) {
     SymbolEntry entry;
 
     if (p == NULL) return NULL;
@@ -243,40 +248,20 @@ Type AST_expr_traverse(AST_expr e) {
     Scope scope;
 
     if (e == NULL) {
-        /* fprintf(f, "<<NULL>>\n"); */
         return NULL;
     }
+
     switch (e->kind) {
         case EXPR_iconst:
-            /* entry = symbol_enter(symbol_table, to_hash(e), 0); */
-            /* entry->entry_type = ENTRY_CONSTANT; */
-            /* entry->e.constant.type = type_int(); */
-            /* entry->e.constant.value.v_int = e->u.e_iconst.rep; */
-            /* return entry->e.constant.type; */
             return type_int();
 
         case EXPR_fconst:
-            /* entry = symbol_enter(symbol_table, to_hash(e), 0); */
-            /* entry->entry_type = ENTRY_CONSTANT; */
-            /* entry->e.constant.type = type_float(); */
-            /* entry->e.constant.value.v_float = e->u.e_fconst.rep; */
-            /* return entry->e.constant.type; */
             return type_float();
 
         case EXPR_cconst:
-            /* entry = symbol_enter(symbol_table, to_hash(e), 0); */
-            /* entry->entry_type = ENTRY_CONSTANT; */
-            /* entry->e.constant.type = type_char(); */
-            /* entry->e.constant.value.v_char = e->u.e_cconst.rep; */
-            /* return entry->e.constant.type; */
             return type_char();
 
         case EXPR_strlit:
-            /* entry = symbol_enter(symbol_table, to_hash(e), 0); */
-            /* entry->entry_type = ENTRY_CONSTANT; */
-            /* entry->e.constant.type = type_array(1, type_char()); */
-            /* entry->e.constant.value.v_strlit = e->u.e_strlit.rep; */
-            /* return entry->e.constant.type; */
             return type_array(1, type_char());
 
         case EXPR_true:
@@ -288,13 +273,13 @@ Type AST_expr_traverse(AST_expr e) {
 
         case EXPR_unop:
             expr1_type = AST_expr_traverse(e->u.e_unop.expr);
-            return AST_unop_traverse(e->u.e_unop.op, expr1_type);
+            return AST_unop_traverse(e, expr1_type);
 
         case EXPR_binop:
             expr1_type = AST_expr_traverse(e->u.e_binop.expr1);
             expr2_type = AST_expr_traverse(e->u.e_binop.expr2);
 
-            return AST_binop_traverse(expr1_type, e->u.e_binop.op, expr2_type);
+            return AST_binop_traverse(expr1_type, e, expr2_type);
 
         case EXPR_id: 
             entry = symbol_lookup(symbol_table, e->u.e_id.id, LOOKUP_ALL_SCOPES, 1);
@@ -309,44 +294,39 @@ Type AST_expr_traverse(AST_expr e) {
                 case ENTRY_VARIABLE:
                     return entry->e.variable.type;
                 default:
-                    error("Unknown identifier %s\n", e->u.e_id.id->name);
+                    SEMANTIC_ERROR(e, "Unknown identifier %s\n", e->u.e_id.id->name);
             }
 
         case EXPR_Id: 
             entry = symbol_lookup(type_symbol_table, e->u.e_Id.id, LOOKUP_ALL_SCOPES, 1);
 
-            if (entry->entry_type != ENTRY_CONSTRUCTOR ) {
-                error("'%s' is not a constructor\n", e->u.e_Id.id->name);
-            }
+            if (entry->entry_type != ENTRY_CONSTRUCTOR ) /* TODO: refactor */
+                SEMANTIC_ERROR(e, "'%s' is not a constructor\n", e->u.e_Id.id->name);
 
             return entry->e.constructor.type;
 
         case EXPR_call: 
-            /* warning("Calling %s...\n", e->u.e_call.id->name); */
             entry = symbol_lookup(symbol_table, e->u.e_call.id, LOOKUP_ALL_SCOPES, 1);
 
             if  ( entry->entry_type != ENTRY_FUNCTION )
-                error("'%s' is not a function\n", e->u.e_call.id->name);
+                SEMANTIC_ERROR(e, "'%s' is not a function\n", e->u.e_call.id->name);
 
             expr1_type = AST_expr_list_traverse(e->u.e_call.list);
 
-            if ( !type_eq(expr1_type, entry->e.function.type->u.t_func.type1) ) {
-                error("The types of the arguments of function '%s' do not match the definition\n", e->u.e_call.id->name);
-            }
+            if ( !type_eq(expr1_type, entry->e.function.type->u.t_func.type1) )
+                SEMANTIC_ERROR(e, "The types of the arguments of function '%s' do not match the definition\n", e->u.e_call.id->name);
 
-            /* warning("Finished %s...\n", e->u.e_call.id->name); */
             return entry->e.function.result_type;
 
         case EXPR_Call: 
             entry = symbol_lookup(type_symbol_table, e->u.e_Call.id, LOOKUP_ALL_SCOPES, 1);
 
-            if ( entry->entry_type != ENTRY_CONSTRUCTOR ) {
-                error("'%s' is not a constructor\n", e->u.e_Call.id->name);
-            }
+            if ( entry->entry_type != ENTRY_CONSTRUCTOR )
+                SEMANTIC_ERROR(e, "'%s' is not a constructor\n", e->u.e_Call.id->name);
+
             expr1_type = AST_expr_list_traverse(e->u.e_Call.list); 
-            if ( !type_eq(expr1_type, entry->e.constructor.argument_type) ) {
-                error("The types of the arguments of the constructor '%s' do not match the definition\n", e->u.e_Call.id->name);
-            }
+            if ( !type_eq(expr1_type, entry->e.constructor.argument_type) )
+                SEMANTIC_ERROR(e, "The types of the arguments of the constructor '%s' do not match the definition\n", e->u.e_Call.id->name);
 
             return entry->e.constructor.type;
 
@@ -357,13 +337,13 @@ Type AST_expr_traverse(AST_expr e) {
             switch(entry->entry_type) {
                 case ENTRY_VARIABLE:
                     if ( entry->e.variable.type->kind != TYPE_array )
-                        error("Type mismatch: '%s' is not an array\n", e->u.e_arrel.id->name);
+                        SEMANTIC_ERROR(e, "Type mismatch: '%s' is not an array\n", e->u.e_arrel.id->name);
 
                     return entry->e.variable.type->u.t_array.type;
                 case ENTRY_PARAMETER:
                     return entry->e.parameter.type; /* TODO: fix this */
                 default:
-                    error("Type mismatch: '%s' is not an array\n", e->u.e_dim.id->name);
+                    SEMANTIC_ERROR(e, "Type mismatch: '%s' is not an array\n", e->u.e_dim.id->name);
             }
 
         case EXPR_dim:
@@ -371,25 +351,26 @@ Type AST_expr_traverse(AST_expr e) {
             switch(entry->entry_type) {
                 case ENTRY_VARIABLE:
                     if ( entry->e.variable.type->kind != TYPE_array )
-                        error("Type mismatch: '%s' is not an array\n", e->u.e_dim.id->name);
+                        SEMANTIC_ERROR(e, "Type mismatch: '%s' is not an array\n", e->u.e_dim.id->name);
                     break;
                 case ENTRY_PARAMETER:
+                    /* TODO: ??? */
                     break;
                 default:
-                    error("Type mismatch: '%s' is not a valid argument for operator 'dim'\n", e->u.e_dim.id->name);
+                    SEMANTIC_ERROR(e, "Type mismatch: '%s' is not a valid argument for operator 'dim'\n", e->u.e_dim.id->name);
             }
 
             return type_int();
 
         case EXPR_new:
             if ( e->u.e_new.type->kind == TYPE_array )
-                error("Typ mismatch: New variable can't be of array type\n");
+                SEMANTIC_ERROR(e, "Type mismatch: New variable can't be of array type\n");
             return type_ref(e->u.e_new.type);
 
         case EXPR_delete:
             result_type = AST_expr_traverse(e->u.e_delete.expr);
             if ( result_type->kind != TYPE_ref )
-                error("Type mismatch: Expression is not of type ref\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Expression is not of type ref\n");
             return type_unit();
 
         case EXPR_let:
@@ -401,17 +382,17 @@ Type AST_expr_traverse(AST_expr e) {
         case EXPR_if: 
             expr1_type = AST_expr_traverse(e->u.e_if.econd);
             if ( !type_eq(expr1_type, type_bool()) )
-                error("Type mismatch: Condition is not of type bool\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Condition is not of type bool\n");
             expr2_type = AST_expr_traverse(e->u.e_if.ethen); 
             expr3_type = AST_expr_traverse(e->u.e_if.eelse);       
             if ( !type_eq(expr2_type, expr3_type) )
-                error("Type mismatch: Then and else parts don't match\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Then and else parts don't match\n");
             return expr2_type;
 
         case EXPR_while:
             expr1_type = AST_expr_traverse(e->u.e_while.econd);
             if ( !type_eq(expr1_type, type_bool()) )
-                error("Type mismatch: Condition is not of type bool\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Condition is not of type bool\n");
             return AST_expr_traverse(e->u.e_while.ebody);
 
         case EXPR_for:  
@@ -421,20 +402,20 @@ Type AST_expr_traverse(AST_expr e) {
             entry->e.identifier.type = type_int();
             expr1_type = AST_expr_traverse(e->u.e_for.expr1);
             if ( !type_eq(expr1_type, type_int()) )
-                error("Type mismatch: Start part of 'for' is not of type int\n");             
+                SEMANTIC_ERROR(e, "Type mismatch: Start part of 'for' is not of type int\n");             
             expr2_type = AST_expr_traverse(e->u.e_for.expr2); 
             if ( !type_eq(expr2_type, type_int()) )
-                error("Type mismatch: End part of 'for' is not of type int\n");
+                SEMANTIC_ERROR(e, "Type mismatch: End part of 'for' is not of type int\n");
             expr3_type = AST_expr_traverse(e->u.e_for.ebody); 
             if ( !type_eq(expr3_type, type_unit()) )
-                error("Type mismatch: Expression of 'for' is not of type unit\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Expression of 'for' is not of type unit\n");
             scope_close(symbol_table);
             return type_unit();
 
         case EXPR_match:
             expr1_type = AST_expr_traverse(e->u.e_match.expr);
             AST_clause_list_traverse(e->u.e_match.list, expr1_type);
-            return NULL;
+            return NULL; /* TODO: ?????? */
 
         default:
             internal("invalid AST");
@@ -459,27 +440,27 @@ void AST_pattern_traverse(AST_pattern p, Type type) {
     switch (p->kind) {
         case PATTERN_iconst:
             if ( !type_eq(type, type_int()) )
-                error("Type mismatch: Int pattern found, but type is not int\n");
+                SEMANTIC_ERROR(p, "Type mismatch: Int pattern found, but type is not int\n");
             break;
 
         case PATTERN_fconst:
             if ( !type_eq(type, type_float()) )
-                error("Type mismatch: Float pattern found, but type is not float\n");
+                SEMANTIC_ERROR(p, "Type mismatch: Float pattern found, but type is not float\n");
             break;
 
         case PATTERN_cconst:
             if ( !type_eq(type, type_float()) )
-                error("Type mismatch: Char pattern found, but type is not char\n");
+                SEMANTIC_ERROR(p, "Type mismatch: Char pattern found, but type is not char\n");
             break;
 
         case PATTERN_true:
             if ( !type_eq(type, type_bool()) )
-                error("Type mismatch: Pattern 'true' found, but type is not bool\n");
+                SEMANTIC_ERROR(p, "Type mismatch: Pattern 'true' found, but type is not bool\n");
             break;
 
         case PATTERN_false:
             if ( !type_eq(type, type_bool()) )
-                error("Type mismatch: Pattern 'false' found, but type is not bool\n");
+                SEMANTIC_ERROR(p, "Type mismatch: Pattern 'false' found, but type is not bool\n");
             break;
 
         case PATTERN_id:
@@ -488,7 +469,7 @@ void AST_pattern_traverse(AST_pattern p, Type type) {
         case PATTERN_Id:
             entry = symbol_lookup(type_symbol_table, p->u.p_Id.id, LOOKUP_ALL_SCOPES, 1);
             if ( !type_eq(type, entry->e.constructor.type) )
-                error("Type mismatch: Constructor in pattern does not match the type of the expression\n");
+                SEMANTIC_ERROR(p, "Type mismatch: Constructor in pattern does not match the type of the expression\n");
 
             type = entry->e.constructor.argument_type;
             AST_pattern_list_traverse(p->u.p_Id.list, type);
@@ -500,28 +481,28 @@ void AST_pattern_traverse(AST_pattern p, Type type) {
     }
 }
 
-Type AST_unop_traverse(AST_unop op, Type expr) {
-    switch (op) {
+Type AST_unop_traverse(AST_expr e, Type expr) {
+    switch (e->u.e_unop.op) {
         case ast_unop_plus:
         case ast_unop_minus:
             if ( !type_eq(expr, type_int()) )
-                error("Type mismatch: Argument is not of type int\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Argument is not of type int\n");
             return type_int();
 
         case ast_unop_fplus:
         case ast_unop_fminus:
             if ( !type_eq(expr, type_float()) )
-                error("Type mismatch: Argument is not of type float\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Argument is not of type float\n");
             return type_float();
 
         case ast_unop_exclam:
             if ( !type_check_ref(expr, true) )
-                error("Type mismatch: Argument is not of type ref\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Argument is not of type ref\n");
             return (expr == NULL ? NULL : expr->u.t_ref.type);
 
         case ast_unop_not:
             if ( !type_eq(expr, type_bool()) )
-                error("Type mismatch: Argument is not of type bool\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Argument is not of type bool\n");
             return type_bool();
 
         default:
@@ -531,17 +512,17 @@ Type AST_unop_traverse(AST_unop op, Type expr) {
     return NULL;
 }
 
-Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
-    switch (op) {
+Type AST_binop_traverse(Type expr1, AST_expr e, Type expr2) {
+    switch (e->u.e_binop.op) {
         case ast_binop_plus:
         case ast_binop_minus:
         case ast_binop_times:
         case ast_binop_div:
         case ast_binop_mod:
             if ( !type_eq(expr1, type_int()) )
-                error("Type mismatch in the left argument\n");
+                SEMANTIC_ERROR(e, "Type mismatch in the left argument\n");
             if ( !type_eq(expr2, type_int()) ) {
-                error("Type mismatch in the right argument\n");
+                SEMANTIC_ERROR(e, "Type mismatch in the right argument\n");
             }
             return type_int();
 
@@ -551,9 +532,9 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
         case ast_binop_fdiv:
         case ast_binop_exp:
             if ( !type_eq(expr1, type_float()) )
-                error("Type mismatch in the left argument\n");
+                SEMANTIC_ERROR(e, "Type mismatch in the left argument\n");
             if ( !type_eq(expr1, type_float()) )
-                error("Type mismatch in the right argument\n");
+                SEMANTIC_ERROR(e, "Type mismatch in the right argument\n");
             return type_float();
 
         case ast_binop_lt:
@@ -561,10 +542,10 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
         case ast_binop_le:
         case ast_binop_ge:
             if ( !type_eq(expr1, expr2) )
-                error("Type mismatch: Arguments must be of the same type\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Arguments must be of the same type\n");
             if ( !type_eq(expr1, type_char()) && !type_eq(expr1, type_float()) &&
                     !type_eq(expr1, type_int()) )
-                error("Type mismatch: Arguments must be of type char, float or int\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Arguments must be of type char, float or int\n");
             return type_bool();
 
         case ast_binop_eq:
@@ -572,19 +553,19 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
         case ast_binop_pheq:
         case ast_binop_phne:
             if ( !type_eq(expr1, expr2) )
-                error("Type mismatch: Arguments must be of the same type\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Arguments must be of the same type\n");
             if ( type_check_array(expr1, false) || type_check_array(expr2, false) )
-                error("Type mismatch: Arguments can't be of type array\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Arguments can't be of type array\n");
             if ( type_check_ref(expr1, false) || type_check_ref(expr2, false) )
-                error("Type mismatch: Arguments can't be of type function\n");
+                SEMANTIC_ERROR(e, "Type mismatch: Arguments can't be of type function\n");
             return type_bool();
 
         case ast_binop_and:
         case ast_binop_or:
             if ( !type_eq(expr1, type_bool()) )
-                error("Type mismatch in the left argument\n");
+                SEMANTIC_ERROR(e, "Type mismatch in the left argument\n");
             if ( !type_eq(expr2, type_bool()) )
-                error("Type mismatch in the right argument\n");
+                SEMANTIC_ERROR(e, "Type mismatch in the right argument\n");
             return type_bool();
 
         case ast_binop_semicolon:
@@ -592,9 +573,9 @@ Type AST_binop_traverse(Type expr1, AST_binop op, Type expr2) {
 
         case ast_binop_assign:
             if ( !type_check_ref(expr1,true) ) 
-                error("Type mismatch: First argument must be of type ref\n");
+                SEMANTIC_ERROR(e, "Type mismatch: First argument must be of type ref\n");
             else if ( expr1 != NULL && !type_eq(expr1->u.t_ref.type, expr2) )
-                error("Type mismatch: The arguments of the assignment operator do not match\n");
+                SEMANTIC_ERROR(e, "Type mismatch: The arguments of the assignment operator do not match\n");
             return type_unit();
 
         default:
@@ -692,11 +673,11 @@ void AST_clause_list_traverse(AST_clause_list l, Type type)
 void AST_pattern_list_traverse(AST_pattern_list l, Type type) {
     if (l == NULL) {
         if ( type != NULL )
-            error ("The number of arguments given to the constructor does not match the type definition\n");
+            SEMANTIC_ERROR(l, "The number of arguments given to the constructor does not match the type definition\n");
         return;
     }
     else if ( type == NULL ) {
-        error ("The number of arguments given to the constructor does not match the type definition\n");
+        SEMANTIC_ERROR(l, "The number of arguments given to the constructor does not match the type definition\n");
         return;
     }
 

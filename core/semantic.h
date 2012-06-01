@@ -46,8 +46,8 @@ Type  AST_expr_traverse           (AST_expr);
 void  AST_clause_traverse         (AST_clause, Type);
 void  AST_pattern_traverse        (AST_pattern, Type);
 
-Type  AST_unop_traverse           (AST_unop, Type);
-Type  AST_binop_traverse          (Type, AST_binop, Type);
+Type  AST_unop_traverse           (AST_expr, Type);
+Type  AST_binop_traverse          (Type, AST_expr, Type);
 
 void  AST_ltdef_list_traverse     (AST_ltdef_list);
 void  AST_def_list_traverse       (AST_def_list);
