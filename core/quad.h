@@ -100,7 +100,7 @@ typedef struct {
    int unique;
    int paramBytes;
    int localBytes;
-   int nesting;
+   int counter;
    bool hasResult;
 } Function;
 

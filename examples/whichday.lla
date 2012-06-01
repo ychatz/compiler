@@ -143,16 +143,19 @@ let init_tree =
 
 -- Function that prints a day
 
-let string_of_day d =
+let string_of_day d str =
    match d with
-      Monday    -> "Mon"
-    | Tuesday   -> "Tue"
-    | Wednesday -> "Wed"
-    | Thursday  -> "Thu"
-    | Friday    -> "Fri"
+      Monday    -> strcpy str "Mon"
+    | Tuesday   -> strcpy str "Tue"
+    | Wednesday -> strcpy str "Wed"
+    | Thursday  -> strcpy str "Thu"
+    | Friday    -> strcpy str "Fri"
    end
 
-let print_day d = print_string (string_of_day d)
+let print_day d =
+   let mutable str [10] in
+   string_of_day d str;
+   print_string str
 
 -- Function that prints an hour
 
@@ -457,7 +460,8 @@ let parseInterval line =
    
    let parseDay d i =
       let check d =
-         let str = string_of_day d in
+         let mutable str [10] in
+         string_of_day d str;
          if isPrefix str line then
          begin
             i := !i + strlen str;
@@ -532,7 +536,8 @@ let parseInterval line =
 -- Function that parses the complete input
 
 let rec parse u =
-   let line = read_string () in
+   let mutable line [80] in
+   read_string line;
    incr linenum;
    if strcmp line "EOF" = 0 then
       ()

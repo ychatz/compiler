@@ -29,6 +29,7 @@
 
 #include "general.h"
 #include "types.h"
+#include "symbol.h"
 
 
 /* ---------------------------------------------------------------------
@@ -255,6 +256,8 @@ struct AST_expr_tag {
       } e_match;
    } u;
    int lineno;
+   Type type;
+   SymbolEntry entry;
 };
 
 struct AST_clause_tag {

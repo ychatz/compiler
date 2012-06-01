@@ -95,6 +95,8 @@ struct SymbolEntry_tag {
           SymbolEntry *last_argument;
           Type type;
           Type result_type;
+          int counter; /* Μοναδικός για κάθε συνάρτηση, για να ξεχωρίζουμε
+                          αυτές που έχουν το ίδιο όνομα */
       } function;
 
       struct {

@@ -6,8 +6,8 @@
 #include "quadgen.h"
 #include "pretty.h"
 
-SymbolTable symbol_table;
-SymbolTable type_symbol_table;
+/* SymbolTable symbol_table; */
+/* SymbolTable type_symbol_table; */
 int global_count;
 int quad_count;
 Quad_list q;
@@ -47,12 +47,12 @@ void AST_program_quad_generate(AST_program p) {
         return;
     }
 
-    type_symbol_table = symbol_make(28447);
-    symbol_table = symbol_make(28447);
-    scope_open(symbol_table);
+    /* type_symbol_table = symbol_make(28447); */
+    /* symbol_table = symbol_make(28447); */
+    /* scope_open(symbol_table); */
 
     AST_ltdef_list_quad_generate(p->list);
-    scope_close(symbol_table);
+    /* scope_close(symbol_table); */
 }
 
 Scope AST_letdef_quad_generate(AST_letdef ld)
@@ -62,19 +62,19 @@ Scope AST_letdef_quad_generate(AST_letdef ld)
         return NULL;
     }
 
-    scope = scope_open(symbol_table);
+    /* scope = scope_open(symbol_table); */
 
-    if ( ld->recFlag == false ) {
-        scope_hide(scope, true);
-    }
+    /* if ( ld->recFlag == false ) { */
+    /*     scope_hide(scope, true); */
+    /* } */
 
     AST_def_list_quad_generate(ld->list);
 
-    if ( ld->recFlag == false ) {
-        scope_hide(scope, false);
-    }
+    /* if ( ld->recFlag == false ) { */
+    /*     scope_hide(scope, false); */
+    /* } */
 
-    return scope;
+    /* return scope; */
 }
 
 Scope AST_typedef_quad_generate(AST_typedef td) {
@@ -84,7 +84,7 @@ Scope AST_typedef_quad_generate(AST_typedef td) {
         return NULL;
     }
 
-    scope = scope_open(type_symbol_table);
+    /* scope = scope_open(type_symbol_table); */
     AST_tdef_list_quad_generate(td->list, scope);
 
     return scope;
@@ -99,12 +99,12 @@ void AST_def_quad_generate(AST_def d) {
 
     switch (d->kind) {
         case DEF_normal:
-            entry = symbol_enter(symbol_table, d->u.d_normal.id, 0);
-            entry->entry_type = ENTRY_FUNCTION;
-            entry->e.function.result_type = d->u.d_normal.type;
+            /* entry = symbol_enter(symbol_table, d->u.d_normal.id, 0); */
+            /* entry->entry_type = ENTRY_FUNCTION; */
+            /* entry->e.function.result_type = d->u.d_normal.type; */
 
             quad_append_new(quad_opcode_unit, quad_operand_simple(quad_function(make_function(d->u.d_normal.id))), quad_operand_empty(), quad_operand_empty());
-            scope_open(symbol_table);
+            /* scope_open(symbol_table); */
 
             par_type = AST_par_list_quad_generate(d->u.d_normal.list);
             /* if ( d->u.d_normal.list == NULL ) */
@@ -117,15 +117,15 @@ void AST_def_quad_generate(AST_def d) {
             /* TODO: backpatch this quad in the expression body (papaspyrou, page 198)? */
             quad_append_new(quad_opcode_endu, quad_operand_simple(quad_function(make_function(d->u.d_normal.id))), quad_operand_empty(), quad_operand_empty());
 
-            scope_close(symbol_table);
+            /* scope_close(symbol_table); */
             break;
-        case DEF_mutable:
+        case DEF_mutable: /* TODO */
             dim_count = AST_expr_list_count(d->u.d_mutable.list);
-            entry = symbol_enter(symbol_table, d->u.d_mutable.id, 0);
-            entry->entry_type = ENTRY_VARIABLE;
-            entry->e.variable.type = ( dim_count == 0 ?
-                    type_ref(d->u.d_mutable.type) :
-                    type_array(dim_count, d->u.d_mutable.type) );
+            /* entry = symbol_enter(symbol_table, d->u.d_mutable.id, 0); */
+            /* entry->entry_type = ENTRY_VARIABLE; */
+            /* entry->e.variable.type = ( dim_count == 0 ? */
+            /*         type_ref(d->u.d_mutable.type) : */
+            /*         type_array(dim_count, d->u.d_mutable.type) ); */
             break;
         default:
             internal("invalid AST");
@@ -142,44 +142,44 @@ void AST_tdef_quad_generate(AST_tdef td, Scope scope) {
 
     user_type = type_id(td->id);
 
-    entry = symbol_enter(type_symbol_table, td->id, 1);
-    entry->entry_type = ENTRY_TYPE;
-    entry->e.type.type = user_type;
-    entry->e.type.scope = scope;
+    /* entry = symbol_enter(type_symbol_table, td->id, 1); */
+    /* entry->entry_type = ENTRY_TYPE; */
+    /* entry->e.type.type = user_type; */
+    /* entry->e.type.scope = scope; */
     AST_constr_list_quad_generate(td->list, user_type);
 }
 
 void AST_constr_quad_generate(AST_constr c, Type user_type) {
-    SymbolEntry entry;
+    /* SymbolEntry entry; */
 
-    if (c == NULL) {
-        return;
-    }
+    /* if (c == NULL) { */
+    /*     return; */
+    /* } */
 
-    /* do not allow two types to use the same constructor */
-    entry = symbol_lookup(type_symbol_table, c->id, LOOKUP_ALL_SCOPES, 0);
-    if ( entry != NULL )
-        error("Constructor %s is used more than one time\n",  c->id->name);
+    /* #<{(| do not allow two types to use the same constructor |)}># */
+    /* entry = symbol_lookup(type_symbol_table, c->id, LOOKUP_ALL_SCOPES, 0); */
+    /* if ( entry != NULL ) */
+    /*     error("Constructor %s is used more than one time\n",  c->id->name); */
 
-    /* do not allow the same constructor to defined twice in a type definition */
-    entry = symbol_enter(type_symbol_table, c->id, 1);
+    /* #<{(| do not allow the same constructor to defined twice in a type definition |)}># */
+    /* entry = symbol_enter(type_symbol_table, c->id, 1); */
 
-    entry->entry_type = ENTRY_CONSTRUCTOR;
-    entry->e.constructor.type = user_type;
-    entry->e.constructor.argument_type = Type_list_quad_generate(c->list);
+    /* entry->entry_type = ENTRY_CONSTRUCTOR; */
+    /* entry->e.constructor.type = user_type; */
+    /* entry->e.constructor.argument_type = Type_list_quad_generate(c->list); */
 }
 
 Type AST_par_quad_generate(AST_par p)
 {
-    SymbolEntry entry;
+    /* SymbolEntry entry; */
 
-    if (p == NULL) return NULL;
+    /* if (p == NULL) return NULL; */
 
-    entry = symbol_enter(symbol_table, p->id, 1);
-    entry->entry_type = ENTRY_PARAMETER;
-    entry->e.parameter.type = p->type;
+    /* entry = symbol_enter(symbol_table, p->id, 1); */
+    /* entry->entry_type = ENTRY_PARAMETER; */
+    /* entry->e.parameter.type = p->type; */
 
-    return p->type;
+    /* return p->type; */
 }
 
 Quad_operand AST_expr_quad_generate(AST_expr e) {
@@ -224,7 +224,7 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
             op1 = AST_expr_quad_generate(e->u.e_binop.expr1);
             op2 = AST_expr_quad_generate(e->u.e_binop.expr2);
 
-            return AST_binop_quad_generate(op1, e->u.e_binop.op, op2);
+            return AST_binop_quad_generate(op1, e, op2);
 
         case EXPR_id:
             /* entry = symbol_lookup(symbol_table, e->u.e_id.id, LOOKUP_ALL_SCOPES, 1); */
@@ -448,13 +448,13 @@ void AST_pattern_quad_generate(AST_pattern p, Type type) {
         case PATTERN_id:
             break;
 
-        case PATTERN_Id:
-            entry = symbol_lookup(type_symbol_table, p->u.p_Id.id, LOOKUP_ALL_SCOPES, 1);
-            if ( !type_eq(type, entry->e.constructor.type) )
-                error("Type mismatch: Constructor in pattern does not match the type of the expression\n");
+        case PATTERN_Id: /* TODO */
+            /* entry = symbol_lookup(type_symbol_table, p->u.p_Id.id, LOOKUP_ALL_SCOPES, 1); */
+            /* if ( !type_eq(type, entry->e.constructor.type) ) */
+            /*     error("Type mismatch: Constructor in pattern does not match the type of the expression\n"); */
 
-            type = entry->e.constructor.argument_type;
-            AST_pattern_list_quad_generate(p->u.p_Id.list, type);
+            /* type = entry->e.constructor.argument_type; */
+            /* AST_pattern_list_quad_generate(p->u.p_Id.list, type); */
 
             break;
 
@@ -518,15 +518,15 @@ Quad_operand AST_unop_quad_generate(AST_unop op, Quad_operand operand) {
 }
 
 
-Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, Quad_operand operand2) {
+Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_expr e, Quad_operand operand2) {
     Quad newquad;
     Quad_operand result;
     Temporary res;
 
-    switch (operator) {
+    switch (e->u.e_binop.op) {
         case ast_binop_plus:
             res.num = ++global_count;
-            res.typ = type_int();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -536,7 +536,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_minus:
             res.num = ++global_count;
-            res.typ = type_int();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -545,7 +545,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
         
         case ast_binop_times:
             res.num = ++global_count;
-            res.typ = type_int();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -554,7 +554,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_div:
             res.num = ++global_count;
-            res.typ = type_int();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -564,7 +564,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_mod:
             res.num = ++global_count;
-            res.typ = type_int();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -573,7 +573,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_fplus:
             res.num = ++global_count;
-            res.typ = type_float();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -582,7 +582,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_fminus:
             res.num = ++global_count;
-            res.typ = type_float();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -591,7 +591,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_ftimes:
             res.num = ++global_count;
-            res.typ = type_float();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -600,7 +600,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_fdiv:
             res.num = ++global_count;
-            res.typ = type_float();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -609,7 +609,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_exp:
             res.num = ++global_count;
-            res.typ = type_float();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -618,7 +618,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_lt:
             res.num = ++global_count;
-            res.typ = type_bool();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -627,7 +627,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_gt:
             res.num = ++global_count;
-            res.typ = type_bool();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -636,7 +636,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_le:
             res.num = ++global_count;
-            res.typ = type_bool();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -645,7 +645,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_ge:
             res.num = ++global_count;
-            res.typ = type_bool();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -654,7 +654,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_eq:
             res.num = ++global_count;
-            res.typ = type_bool();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -663,7 +663,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_ne:
             res.num = ++global_count;
-            res.typ = type_bool();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -672,7 +672,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_pheq:
             res.num = ++global_count;
-            res.typ = type_bool();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -681,7 +681,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_phne:
             res.num = ++global_count;
-            res.typ = type_bool();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -690,7 +690,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_and:
             res.num = ++global_count;
-            res.typ = type_bool();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -699,7 +699,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_or:
             res.num = ++global_count;
-            res.typ = type_bool();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -708,7 +708,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_semicolon:     /* TODO */
             res.num = ++global_count;
-            res.typ = type_float();
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
@@ -717,7 +717,7 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_binop operator, 
 
         case ast_binop_assign:
             res.num = ++global_count;
-            res.typ = type_float(); /* TODO: Ti typou einai afto? :) */
+            res.typ = e->type;
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));

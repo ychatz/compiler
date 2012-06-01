@@ -14,6 +14,7 @@
 
 SymbolTable symbol_table;
 SymbolTable type_symbol_table;
+int function_counter; /* Ο μετρητής των διαφορετικών συναρτήσεων που έχουμε βρει */
 
 void add_function(const char *name, Type parameter_type, Type result_type ) {
     SymbolEntry entry;
@@ -22,6 +23,7 @@ void add_function(const char *name, Type parameter_type, Type result_type ) {
     entry->entry_type = ENTRY_FUNCTION;
     entry->e.function.result_type = result_type;
     entry->e.function.type = type_func(parameter_type, result_type);
+    entry->e.function.counter = ++function_counter;
 }
 
 bool type_check_ref(Type a, bool deft) {
@@ -163,6 +165,7 @@ void AST_def_traverse(AST_def d) {
             entry = symbol_enter(symbol_table, d->u.d_normal.id, 0);
             entry->entry_type = ENTRY_FUNCTION;
             entry->e.function.result_type = d->u.d_normal.type;
+            entry->e.function.counter = ++function_counter;
 
             scope_open(symbol_table);
 
@@ -244,7 +247,7 @@ Type AST_par_traverse(AST_par p) {
 
 Type AST_expr_traverse(AST_expr e) {
     SymbolEntry entry;
-    Type expr1_type, expr2_type, expr3_type, result_type;
+    Type expr1_type, expr2_type, expr3_type, result_type, res = type_unknown();
     Scope scope;
 
     if (e == NULL) {
@@ -253,49 +256,62 @@ Type AST_expr_traverse(AST_expr e) {
 
     switch (e->kind) {
         case EXPR_iconst:
-            return type_int();
+            res = type_int();
+            break;
 
         case EXPR_fconst:
-            return type_float();
+            res = type_float();
+            break;
 
         case EXPR_cconst:
-            return type_char();
+            res = type_char();
+            break;
 
         case EXPR_strlit:
-            return type_array(1, type_char());
+            res = type_array(1, type_char());
+            break;
 
         case EXPR_true:
         case EXPR_false:
             return type_bool();
+            break;
 
         case EXPR_unit:
-            return type_unit();
+            res = type_unit();
+            break;
 
         case EXPR_unop:
             expr1_type = AST_expr_traverse(e->u.e_unop.expr);
-            return AST_unop_traverse(e, expr1_type);
+            res = AST_unop_traverse(e, expr1_type);
+            break;
 
         case EXPR_binop:
             expr1_type = AST_expr_traverse(e->u.e_binop.expr1);
             expr2_type = AST_expr_traverse(e->u.e_binop.expr2);
 
-            return AST_binop_traverse(expr1_type, e, expr2_type);
+            res = AST_binop_traverse(expr1_type, e, expr2_type);
+            break;
 
         case EXPR_id: 
             entry = symbol_lookup(symbol_table, e->u.e_id.id, LOOKUP_ALL_SCOPES, 1);
 
             switch(entry->entry_type) {
                 case ENTRY_FUNCTION:
-                    return entry->e.function.type;
+                    res = entry->e.function.type;
+                    break;
                 case ENTRY_PARAMETER:
-                    return entry->e.parameter.type;
+                    res = entry->e.parameter.type;
+                    break;
                 case ENTRY_IDENTIFIER:
-                    return entry->e.identifier.type;
+                    res = entry->e.identifier.type;
+                    break;
                 case ENTRY_VARIABLE:
-                    return entry->e.variable.type;
+                    res = entry->e.variable.type;
+                    break;
                 default:
                     SEMANTIC_ERROR(e, "Unknown identifier %s\n", e->u.e_id.id->name);
             }
+            break;
 
         case EXPR_Id: 
             entry = symbol_lookup(type_symbol_table, e->u.e_Id.id, LOOKUP_ALL_SCOPES, 1);
@@ -303,7 +319,8 @@ Type AST_expr_traverse(AST_expr e) {
             if (entry->entry_type != ENTRY_CONSTRUCTOR ) /* TODO: refactor */
                 SEMANTIC_ERROR(e, "'%s' is not a constructor\n", e->u.e_Id.id->name);
 
-            return entry->e.constructor.type;
+            res = entry->e.constructor.type;
+            break;
 
         case EXPR_call: 
             entry = symbol_lookup(symbol_table, e->u.e_call.id, LOOKUP_ALL_SCOPES, 1);
@@ -314,9 +331,13 @@ Type AST_expr_traverse(AST_expr e) {
             expr1_type = AST_expr_list_traverse(e->u.e_call.list);
 
             if ( !type_eq(expr1_type, entry->e.function.type->u.t_func.type1) )
-                SEMANTIC_ERROR(e, "The types of the arguments of function '%s' do not match the definition\n", e->u.e_call.id->name);
+                SEMANTIC_ERROR(e, "The types of the arguments of function '%s' do "
+                        "not match the definition\n", e->u.e_call.id->name);
 
-            return entry->e.function.result_type;
+            e->entry = entry; /* προσθήκη στον κόμβο ενός δείκτη στο symbol
+                                 entry της συνάρτησης που καλούμε */
+            res = entry->e.function.result_type;
+            break;
 
         case EXPR_Call: 
             entry = symbol_lookup(type_symbol_table, e->u.e_Call.id, LOOKUP_ALL_SCOPES, 1);
@@ -326,9 +347,11 @@ Type AST_expr_traverse(AST_expr e) {
 
             expr1_type = AST_expr_list_traverse(e->u.e_Call.list); 
             if ( !type_eq(expr1_type, entry->e.constructor.argument_type) )
-                SEMANTIC_ERROR(e, "The types of the arguments of the constructor '%s' do not match the definition\n", e->u.e_Call.id->name);
+                SEMANTIC_ERROR(e, "The types of the arguments of the constructor "
+                        "'%s' do not match the definition\n", e->u.e_Call.id->name);
 
-            return entry->e.constructor.type;
+            res = entry->e.constructor.type;
+            break;
 
         case EXPR_arrel: 
             entry = symbol_lookup(symbol_table, e->u.e_arrel.id, LOOKUP_ALL_SCOPES, 1);
@@ -339,12 +362,15 @@ Type AST_expr_traverse(AST_expr e) {
                     if ( entry->e.variable.type->kind != TYPE_array )
                         SEMANTIC_ERROR(e, "Type mismatch: '%s' is not an array\n", e->u.e_arrel.id->name);
 
-                    return entry->e.variable.type->u.t_array.type;
+                    res = entry->e.variable.type->u.t_array.type;
+                    break;
                 case ENTRY_PARAMETER:
-                    return entry->e.parameter.type; /* TODO: fix this */
+                    res = entry->e.parameter.type; /* TODO: fix this */
+                    break;
                 default:
                     SEMANTIC_ERROR(e, "Type mismatch: '%s' is not an array\n", e->u.e_dim.id->name);
             }
+            break;
 
         case EXPR_dim:
             entry = symbol_lookup(symbol_table, e->u.e_dim.id, LOOKUP_ALL_SCOPES, 1);
@@ -360,24 +386,27 @@ Type AST_expr_traverse(AST_expr e) {
                     SEMANTIC_ERROR(e, "Type mismatch: '%s' is not a valid argument for operator 'dim'\n", e->u.e_dim.id->name);
             }
 
-            return type_int();
+            res = type_int();
+            break;
 
         case EXPR_new:
             if ( e->u.e_new.type->kind == TYPE_array )
                 SEMANTIC_ERROR(e, "Type mismatch: New variable can't be of array type\n");
-            return type_ref(e->u.e_new.type);
+            res = type_ref(e->u.e_new.type);
+            break;
 
         case EXPR_delete:
             result_type = AST_expr_traverse(e->u.e_delete.expr);
             if ( result_type->kind != TYPE_ref )
                 SEMANTIC_ERROR(e, "Type mismatch: Expression is not of type ref\n");
-            return type_unit();
+            res = type_unit();
+            break;
 
         case EXPR_let:
             scope = AST_letdef_traverse(e->u.e_let.def);
-            result_type = AST_expr_traverse(e->u.e_let.expr);
+            res = AST_expr_traverse(e->u.e_let.expr);
             scope_close(symbol_table);
-            return result_type;
+            break;
 
         case EXPR_if: 
             expr1_type = AST_expr_traverse(e->u.e_if.econd);
@@ -387,13 +416,15 @@ Type AST_expr_traverse(AST_expr e) {
             expr3_type = AST_expr_traverse(e->u.e_if.eelse);       
             if ( !type_eq(expr2_type, expr3_type) )
                 SEMANTIC_ERROR(e, "Type mismatch: Then and else parts don't match\n");
-            return expr2_type;
+            res = expr2_type;
+            break;
 
         case EXPR_while:
             expr1_type = AST_expr_traverse(e->u.e_while.econd);
             if ( !type_eq(expr1_type, type_bool()) )
                 SEMANTIC_ERROR(e, "Type mismatch: Condition is not of type bool\n");
-            return AST_expr_traverse(e->u.e_while.ebody);
+            res = AST_expr_traverse(e->u.e_while.ebody);
+            break;
 
         case EXPR_for:  
             scope_open(symbol_table);
@@ -410,18 +441,21 @@ Type AST_expr_traverse(AST_expr e) {
             if ( !type_eq(expr3_type, type_unit()) )
                 SEMANTIC_ERROR(e, "Type mismatch: Expression of 'for' is not of type unit\n");
             scope_close(symbol_table);
-            return type_unit();
+            res = type_unit();
+            break;
 
         case EXPR_match:
             expr1_type = AST_expr_traverse(e->u.e_match.expr);
             AST_clause_list_traverse(e->u.e_match.list, expr1_type);
-            return NULL; /* TODO: ?????? */
+            res = NULL; /* TODO: ?????? */
+            break;
 
         default:
             internal("invalid AST");
     }
 
-    return type_unknown();
+    e->type = res;
+    return res;
 }
 
 void AST_clause_traverse(AST_clause c, Type type) {
