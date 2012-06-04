@@ -70,6 +70,7 @@ typedef enum {
    quad_opcode_par,
    quad_opcode_plus,
    quad_opcode_ret,
+   quad_opcode_retv,
    quad_opcode_times,
    quad_opcode_unit,
    quad_opcode_exp,

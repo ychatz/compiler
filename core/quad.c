@@ -219,7 +219,7 @@ static void quad_simple_print (FILE * f, Quad_simple qs)
             else
                 fprintf(f, "fun[%s; %d; %d; %d; %d; %d]", id_name(qs->u.fun.id),
                         qs->u.fun.unique, qs->u.fun.paramBytes,
-                        qs->u.fun.localBytes, qs->u.fun.nesting,
+                        qs->u.fun.localBytes, qs->u.fun.counter,
                         qs->u.fun.hasResult);
             break;
         case SIMPLE_temporary:
@@ -303,6 +303,7 @@ void quad_print (FILE * f, Quad q)
         case quad_opcode_par:      fprintf(f, "par, ");   break;
         case quad_opcode_plus:     fprintf(f, "+, ");     break;
         case quad_opcode_ret:      fprintf(f, "ret, ");   break;
+        case quad_opcode_retv:     fprintf(f, "retv, ");   break;
         case quad_opcode_times:    fprintf(f, "*, ");     break;
         case quad_opcode_unit:     fprintf(f, "unit, ");  break; 
         case quad_opcode_exp:      fprintf(f, "**, ");    break;   
