@@ -40,24 +40,18 @@ void quad_backpatch(Quad quad) {
    --------------------------------------------------------------------- */
 
 void AST_program_quad_generate(AST_program p) {
-    if (p == NULL) {
-        return;
-    }
+    if (p == NULL) return;
 
     AST_ltdef_list_quad_generate(p->list);
 }
 
-Scope AST_letdef_quad_generate(AST_letdef ld) {
-    Scope scope;
-    if (ld == NULL) {
-        return NULL;
-    }
+void AST_letdef_quad_generate(AST_letdef ld) {
+    if (ld == NULL) return ;
 
     AST_def_list_quad_generate(ld->list);
 }
 
 void AST_def_quad_generate(AST_def d) {
-    SymbolEntry entry;
     Quad_operand body_result;
     Type par_type;
     int dim_count;
@@ -115,7 +109,6 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
     SymbolEntry entry;
     Quad_operand op1, op2, reserved, if_operand, else_operand;
     /* Type expr1_type, expr2_type, expr3_type, result_type; */
-    Scope scope;
     Quad jump_to_if, jump_after_if, jump_after_else;
     Temporary res;
 
@@ -343,9 +336,7 @@ void AST_clause_quad_generate(AST_clause c, Type type) {
     /*       ... and this AST_expr_print(c->expr); */
 }
 
-void AST_pattern_quad_generate(AST_pattern p, Type type) {
-    SymbolEntry entry;
-
+void AST_pattern_quad_generate(AST_pattern p, Type type) { /* TODO */
     if (p == NULL) return;
 
     switch (p->kind) {
@@ -418,7 +409,7 @@ Quad_operand AST_unop_quad_generate(AST_unop op, Quad_operand operand) {
             res.offset = 0;
 
             result = quad_operand_simple(quad_temporary(res));
-            quad_append_new(quad_opcode_times, quad_operand_simple(quad_fconst(-1)), operand, result);       
+            quad_append_new(quad_opcode_times, quad_operand_simple(quad_fconst(-1.)), operand, result);       
             return result;
 
         case ast_unop_exclam: /*TODO Ti typo tha valoume sto deref? */
@@ -538,15 +529,12 @@ Quad_operand AST_binop_quad_generate(Quad_operand operand1, AST_expr e, Quad_ope
             quad_append_new(quad_opcode_or, operand1, operand2, result);
             return result; 
 
-        case ast_binop_semicolon:     /* TODO */
-            quad_append_new(quad_opcode_div, operand1, operand2, result);
-            return result; 
+        case ast_binop_semicolon:
+            return operand2; 
 
         case ast_binop_assign:
             quad_append_new(quad_opcode_assign, operand1, operand2, result);
             return result;
-
-            return quad_operand_empty(); /* TODO */
 
         default:
             internal("invalid AST");
@@ -593,24 +581,11 @@ Type AST_par_list_quad_generate(AST_par_list l) {
         return temp;
 }
 
-/* int AST_expr_list_count(AST_expr_list l) { */
-/*     if (l == NULL) return 0; */
-/*  */
-/*     return 1 + AST_expr_list_count(l->tail); */
-/* } */
-
-Type AST_expr_list_quad_generate(AST_expr_list l) {
-    Type temp, temp2;
-
+void AST_expr_list_quad_generate(AST_expr_list l) {
     if (l == NULL) return NULL;
 
-    temp = AST_expr_quad_generate(l->head);
-    temp2 =AST_expr_list_quad_generate(l->tail);
-
-    if ( l->tail != NULL )
-        return type_func(temp, temp2);
-    else
-        return temp;
+    AST_expr_quad_generate(l->head);
+    AST_expr_list_quad_generate(l->tail);
 }
 
 void AST_clause_list_quad_generate(AST_clause_list l, Type type)
