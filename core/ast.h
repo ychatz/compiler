@@ -135,6 +135,7 @@ struct AST_def_tag {
         } d_mutable;
     } u;
     int lineno;
+    SymbolEntry entry;
 };
 
 struct AST_tdef_tag {

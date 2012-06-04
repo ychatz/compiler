@@ -118,8 +118,7 @@ void AST_program_traverse(AST_program p) {
     scope_close(symbol_table);
 }
 
-Scope AST_letdef_traverse (AST_letdef ld)
-{
+Scope AST_letdef_traverse(AST_letdef ld) {
     Scope scope;
     if (ld == NULL) {
         return NULL;
@@ -166,6 +165,7 @@ void AST_def_traverse(AST_def d) {
             entry->entry_type = ENTRY_FUNCTION;
             entry->e.function.result_type = d->u.d_normal.type;
             entry->e.function.counter = ++function_counter;
+            d->entry = entry;
 
             scope_open(symbol_table);
 
@@ -294,6 +294,7 @@ Type AST_expr_traverse(AST_expr e) {
 
         case EXPR_id: 
             entry = symbol_lookup(symbol_table, e->u.e_id.id, LOOKUP_ALL_SCOPES, 1);
+            e->entry = entry;
 
             switch(entry->entry_type) {
                 case ENTRY_FUNCTION:
@@ -619,8 +620,7 @@ Type AST_binop_traverse(Type expr1, AST_expr e, Type expr2) {
     return NULL;
 }
 
-void AST_ltdef_list_traverse (AST_ltdef_list l)
-{
+void AST_ltdef_list_traverse(AST_ltdef_list l) {
     if (l == NULL) return;
 
     switch (l->kind) {
@@ -637,32 +637,28 @@ void AST_ltdef_list_traverse (AST_ltdef_list l)
     }
 }
 
-void AST_def_list_traverse (AST_def_list l)
-{
+void AST_def_list_traverse(AST_def_list l) {
     if (l == NULL) return;
 
     AST_def_traverse(l->head);
     AST_def_list_traverse(l->tail);
 }
 
-void AST_tdef_list_traverse(AST_tdef_list l, Scope scope)
-{
+void AST_tdef_list_traverse(AST_tdef_list l, Scope scope) {
     if (l == NULL) return;
 
     AST_tdef_traverse(l->head, scope);
     AST_tdef_list_traverse(l->tail, scope);
 }
 
-void AST_constr_list_traverse(AST_constr_list l, Type user_type)
-{
+void AST_constr_list_traverse(AST_constr_list l, Type user_type) {
     if (l == NULL) return;
 
     AST_constr_traverse(l->head, user_type);
     AST_constr_list_traverse(l->tail, user_type);
 }
 
-Type AST_par_list_traverse(AST_par_list l)
-{
+Type AST_par_list_traverse(AST_par_list l) {
     Type temp, temp2;
 
     if (l == NULL) return NULL;

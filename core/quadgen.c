@@ -17,6 +17,14 @@ Function make_function(Identifier id) {
     return x;
 }
 
+/* TODO: do we need to pass more information about the object? */
+Object make_object(Identifier id, Type typ) {
+    Object x;
+    x.id = id;
+    x.typ = typ;
+    return x;
+}
+
 Quad quad_append_new(Quad_opname opname, Quad_operand op1, Quad_operand op2, Quad_operand op3) {
     Quad newquad = quad(++quad_count, opname, op1, op2, op3);
     q = quad_list(newquad, q);
@@ -50,6 +58,7 @@ Scope AST_letdef_quad_generate(AST_letdef ld) {
 
 void AST_def_quad_generate(AST_def d) {
     SymbolEntry entry;
+    Quad_operand body_result;
     Type par_type;
     int dim_count;
 
@@ -57,26 +66,26 @@ void AST_def_quad_generate(AST_def d) {
 
     switch (d->kind) {
         case DEF_normal:
-            /* entry = symbol_enter(symbol_table, d->u.d_normal.id, 0); */
-            /* entry->entry_type = ENTRY_FUNCTION; */
-            /* entry->e.function.result_type = d->u.d_normal.type; */
-
             quad_append_new(quad_opcode_unit, quad_operand_simple(quad_function(make_function(d->u.d_normal.id))), quad_operand_empty(), quad_operand_empty());
-            /* scope_open(symbol_table); */
 
-            par_type = AST_par_list_quad_generate(d->u.d_normal.list);
-            /* if ( d->u.d_normal.list == NULL ) */
-            /*     entry->e.function.type = d->u.d_normal.type; */
-            /* else */
-            /*     entry->e.function.type = type_func(par_type, d->u.d_normal.type); */
+            par_type = AST_par_list_quad_generate(d->u.d_normal.list); /* TODO: remove this? */
+            body_result = AST_expr_quad_generate(d->u.d_normal.expr);
 
-            AST_expr_quad_generate(d->u.d_normal.expr);
+            if ( d->entry->e.function.result_type != NULL &&
+                 d->entry->e.function.result_type->kind == TYPE_unit ) {
+                quad_append_new(quad_opcode_ret, quad_operand_empty(),
+                        quad_operand_empty(), quad_operand_empty());
+            }
+            else {
+                quad_append_new(quad_opcode_retv, body_result,
+                        quad_operand_empty(), quad_operand_empty());
+            }
 
             /* TODO: backpatch this quad in the expression body (papaspyrou, page 198)? */
             quad_append_new(quad_opcode_endu, quad_operand_simple(quad_function(make_function(d->u.d_normal.id))), quad_operand_empty(), quad_operand_empty());
 
-            /* scope_close(symbol_table); */
             break;
+
         case DEF_mutable: /* TODO */
             dim_count = AST_expr_list_count(d->u.d_mutable.list);
             /* entry = symbol_enter(symbol_table, d->u.d_mutable.id, 0); */
@@ -90,8 +99,7 @@ void AST_def_quad_generate(AST_def d) {
     }
 }
 
-Type AST_par_quad_generate(AST_par p)
-{
+Type AST_par_quad_generate(AST_par p) {
     /* SymbolEntry entry; */
 
     /* if (p == NULL) return NULL; */
@@ -148,21 +156,24 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
             return AST_binop_quad_generate(op1, e, op2);
 
         case EXPR_id:
-            /* entry = symbol_lookup(symbol_table, e->u.e_id.id, LOOKUP_ALL_SCOPES, 1); */
+            entry = e->entry;
 
-            /* switch(entry->entry_type) { */
-            /*     case ENTRY_FUNCTION: */
-            /*         return entry->e.function.type; */
-            /*     case ENTRY_PARAMETER: */
-            /*         return entry->e.parameter.type; */
-            /*     case ENTRY_IDENTIFIER: */
-            /*         return entry->e.identifier.type; */
-            /*     case ENTRY_VARIABLE: */
-            /*         return entry->e.variable.type; */
-            /*     default: */
-            /*         error("Unknown identifier %s\n", e->u.e_id.id->name); */
-            /* } */
-            return quad_operand_empty(); /* TODO */
+            switch(entry->entry_type) {
+                /* case ENTRY_FUNCTION: */
+                /*     return entry->e.function.type; */
+                case ENTRY_PARAMETER:
+                    return quad_operand_simple(quad_object(make_object(
+                                    entry->id, entry->e.parameter.type)));
+                case ENTRY_IDENTIFIER:
+                    return quad_operand_simple(quad_object(make_object(
+                                    entry->id, entry->e.identifier.type)));
+                    break;
+                /* case ENTRY_VARIABLE: */
+                /*     return entry->e.variable.type; */
+                default:
+                    error("Unknown identifier %s\n", e->u.e_id.id->name);
+            }
+            return quad_operand_empty();
 
         case EXPR_Id: 
             /* entry = symbol_lookup(type_symbol_table, e->u.e_Id.id, LOOKUP_ALL_SCOPES, 1); */
@@ -251,11 +262,8 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
             return quad_operand_empty(); /* TODO */
 
         case EXPR_let:
-            /* scope = AST_letdef_quad_generate(e->u.e_let.def); */
-            /* result_type = AST_expr_quad_generate(e->u.e_let.expr); */
-            /* scope_close(symbol_table); */
-            /* return result_type; */
-            return quad_operand_empty(); /* TODO */
+            AST_letdef_quad_generate(e->u.e_let.def);
+            return AST_expr_quad_generate(e->u.e_let.expr);
 
         case EXPR_if:
             /* generate condition quads */
