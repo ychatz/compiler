@@ -555,9 +555,9 @@ Type AST_binop_traverse(Type expr1, AST_expr e, Type expr2) {
         case ast_binop_div:
         case ast_binop_mod:
             if ( !type_eq(expr1, type_int()) )
-                SEMANTIC_ERROR(e, "Type mismatch in the left argument\n");
+                SEMANTIC_ERROR(e, "Type mismatch in the left operand\n");
             if ( !type_eq(expr2, type_int()) ) {
-                SEMANTIC_ERROR(e, "Type mismatch in the right argument\n");
+                SEMANTIC_ERROR(e, "Type mismatch in the right operand\n");
             }
             return type_int();
 
@@ -567,9 +567,9 @@ Type AST_binop_traverse(Type expr1, AST_expr e, Type expr2) {
         case ast_binop_fdiv:
         case ast_binop_exp:
             if ( !type_eq(expr1, type_float()) )
-                SEMANTIC_ERROR(e, "Type mismatch in the left argument\n");
-            if ( !type_eq(expr1, type_float()) )
-                SEMANTIC_ERROR(e, "Type mismatch in the right argument\n");
+                SEMANTIC_ERROR(e, "Type mismatch in the left operand\n");
+            if ( !type_eq(expr2, type_float()) )
+                SEMANTIC_ERROR(e, "Type mismatch in the right operand\n");
             return type_float();
 
         case ast_binop_lt:
