@@ -11,9 +11,10 @@ int quad_count;
 Quad_list q;
 
 /* TODO: do we need to pass more information about the function? */
-Function make_function(Identifier id) {
+Function make_function(Identifier id, int counter) {
     Function x;
     x.id = id;
+    x.counter = counter;
     return x;
 }
 
@@ -55,18 +56,23 @@ void AST_def_quad_generate(AST_def d) {
     Quad_operand body_result;
     Type par_type;
     int dim_count;
+    SymbolEntry entry;
+    Function fun;
 
     if (d == NULL) return;
 
     switch (d->kind) {
         case DEF_normal:
-            quad_append_new(quad_opcode_unit, quad_operand_simple(quad_function(make_function(d->u.d_normal.id))), quad_operand_empty(), quad_operand_empty());
+            entry = d->entry;
+            fun = make_function(d->u.d_normal.id, entry->e.function.counter);
+
+            quad_append_new(quad_opcode_unit, quad_operand_simple(quad_function(fun)), quad_operand_empty(), quad_operand_empty());
 
             par_type = AST_par_list_quad_generate(d->u.d_normal.list); /* TODO: remove this? */
             body_result = AST_expr_quad_generate(d->u.d_normal.expr);
 
-            if ( d->entry->e.function.result_type != NULL &&
-                 d->entry->e.function.result_type->kind == TYPE_unit ) {
+            if ( entry->e.function.result_type != NULL &&
+                 entry->e.function.result_type->kind == TYPE_unit ) {
                 quad_append_new(quad_opcode_ret, quad_operand_empty(),
                         quad_operand_empty(), quad_operand_empty());
             }
@@ -76,7 +82,7 @@ void AST_def_quad_generate(AST_def d) {
             }
 
             /* TODO: backpatch this quad in the expression body (papaspyrou, page 198)? */
-            quad_append_new(quad_opcode_endu, quad_operand_simple(quad_function(make_function(d->u.d_normal.id))), quad_operand_empty(), quad_operand_empty());
+            quad_append_new(quad_opcode_endu, quad_operand_simple(quad_function(fun)), quad_operand_empty(), quad_operand_empty());
 
             break;
 
@@ -112,10 +118,8 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
     Quad jump_to_if, jump_after_if, jump_after_else;
     Temporary res;
 
-    if (e == NULL) {
-        /* fprintf(f, "<<NULL>>\n"); */
-        return NULL;
-    }
+    if (e == NULL) return NULL;
+
     switch (e->kind) {
         case EXPR_iconst:
             return quad_operand_simple(quad_iconst(e->u.e_iconst.rep));
@@ -166,7 +170,6 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
                 default:
                     error("Unknown identifier %s\n", e->u.e_id.id->name);
             }
-            return quad_operand_empty();
 
         case EXPR_Id: 
             /* entry = symbol_lookup(type_symbol_table, e->u.e_Id.id, LOOKUP_ALL_SCOPES, 1); */
@@ -179,12 +182,19 @@ Quad_operand AST_expr_quad_generate(AST_expr e) {
             return quad_operand_empty(); /* TODO */
 
         case EXPR_call: 
-            /* entry = symbol_lookup(symbol_table, e->u.e_call.id, LOOKUP_ALL_SCOPES, 1); */
+            entry = e->entry;
 
-            /* if  ( entry->entry_type != ENTRY_FUNCTION ) */
-            /*     error("'%s' is not a function\n", e->u.e_call.id->name); */
-
+            /* l = e->u.e_call.list; */
             /* expr1_type = AST_expr_list_quad_generate(e->u.e_call.list); */
+            /* for (l = e->u.e_call.list; l != NULL; l = l->tail) { */
+            /*     result = AST_expr_quad_generate(l->head); */
+            /*     quad_append_new( */
+            /* } */
+
+            quad_append_new(quad_opcode_call, quad_operand_empty(),
+                quad_operand_empty(),
+                quad_operand_simple(quad_function(make_function(e->u.e_call.id,
+                        entry->e.function.counter))));
 
             /* if ( !type_eq(expr1_type, entry->e.function.type->u.t_func.type1) ) { */
             /*     error("The types of the arguments of function '%s' do not match the definition\n", e->u.e_call.id->name); */
@@ -582,7 +592,7 @@ Type AST_par_list_quad_generate(AST_par_list l) {
 }
 
 void AST_expr_list_quad_generate(AST_expr_list l) {
-    if (l == NULL) return NULL;
+    if (l == NULL) return ;
 
     AST_expr_quad_generate(l->head);
     AST_expr_list_quad_generate(l->tail);
