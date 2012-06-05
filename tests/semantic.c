@@ -55,7 +55,7 @@ int message(const char *fmt, ...) {
     strcpy(__file_name, __FILE__); \
     __line_number = __LINE__; \
     AST_program_traverse(ast); \
-    assert(numErrors == expectError); \
+    assert((errorsExpected > 0) == (numErrors > 0)) \
 } while(0);
 
 void semantic_should_check_for_type_mismatch_in_function_result_values(void) {
@@ -89,6 +89,20 @@ void semantic_should_allow_assign_of_ref_left_operand(void) {
     static_analysis(0);
 }
 
+void semantic_should_detect_addition_of_different_types(void) {
+    yy_scan_string("let x = 2 + '3'\n");
+    static_analysis(1);
+
+    yy_scan_string("let x = 2 + 3.0\n");
+    static_analysis(1);
+
+    yy_scan_string("let x = 2 +. 3.0\n");
+    static_analysis(1);
+
+    yy_scan_string("let x (y : int) = 3.0 +. y\n");
+    static_analysis(1);
+}
+
 /* void semantic_should_apply_type_inference(void) { */
 /*     yy_scan_string("let fun x = x := 2; x := 'c'\n"); */
 /*     static_analysis(1); */
@@ -101,6 +115,7 @@ void semantic_run_tests(void) {
         semantic_should_check_for_type_mismatch_in_function_parameters,
         semantic_should_detect_assign_of_non_ref_left_operand,
         semantic_should_allow_assign_of_ref_left_operand,
+        semantic_should_detect_addition_of_different_types,
         /* semantic_should_apply_type_inference */
     };
 
