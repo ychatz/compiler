@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "../core/llama.h"
 #include "../core/ast.h"
 #include "../core/lexer.h"
 #include "../core/parser.h"
+#include "../core/semantic.h"
 
 #include "helpers.h"
 
@@ -15,6 +17,8 @@
     } \
 } while(0);
 
+extern int numErrors;
+extern int numWarnings;
 extern int lineno;
 extern AST_program ast;
 
